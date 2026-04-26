@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --hell-black:        #0B0B10;
+  --hell-surface:      #13131C;
+  --hell-elevated:     #1C1C2A;
+  --hell-border:       #2A2A35;
+  --hell-border-soft:  #1E1E2A;
+
+  --hell-red:          #FF3B3B;
+  --hell-red-dim:      #FF3B3B40;
+  --loot-gold:         #FFD166;
+  --loot-gold-dim:     #FFD16640;
+  --void-violet:       #8F5CFF;
+  --void-violet-dim:   #8F5CFF40;
+  --acid-green:        #7CFF6B;
+  --acid-green-dim:    #7CFF6B40;
+  --arc-blue:          #3DDCFF;
+  --arc-blue-dim:      #3DDCFF40;
+  --metal-gray:        #2A2A35;
+
+  --text-primary:      #F0EDE8;
+  --text-secondary:    #8A8A9A;
+  --text-dim:          #4A4A5A;
+  --text-inverse:      #0B0B10;
+
+  --rarity-common:     #8A8A9A;
+  --rarity-uncommon:   #7CFF6B;
+  --rarity-rare:       #3DDCFF;
+  --rarity-epic:       #8F5CFF;
+  --rarity-legendary:  #FFD166;
+  --rarity-cursed:     #FF3B3B;
+  --rarity-hellborn-a: #FF3B3B;
+  --rarity-hellborn-b: #8F5CFF;
+
+  --priority-low:      #8A8A9A;
+  --priority-medium:   #FFD166;
+  --priority-high:     #FF3B3B;
+  --priority-critical: #8F5CFF;
+
+  --status-safe:       #7CFF6B;
+  --status-risky:      #FFD166;
+  --status-hell:       #FF3B3B;
+  --status-combo:      #3DDCFF;
+
+  --font-display:  'Bebas Neue', 'Impact', sans-serif;
+  --font-ui:       'Space Grotesk', 'DM Sans', sans-serif;
+  --font-mono:     'Space Mono', 'Courier New', monospace;
+
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-pill: 100px;
+
+  --shadow-hard:      4px 4px 0px #000000;
+  --shadow-hard-sm:   2px 2px 0px #000000;
+  --shadow-glow-red:  0 0 16px var(--hell-red-dim);
+  --shadow-glow-gold: 0 0 16px var(--loot-gold-dim);
+  --shadow-glow-blue: 0 0 16px var(--arc-blue-dim);
+  --shadow-glow-violet: 0 0 16px var(--void-violet-dim);
+  --shadow-glow-green: 0 0 16px var(--acid-green-dim);
+
+  --ease-snap:   cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:    120ms;
+  --dur-mid:     200ms;
+  --dur-reward:  400ms;
+}

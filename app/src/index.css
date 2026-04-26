@@ -1,0 +1,65 @@
+@import './styles/tokens.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  background: #111118;
+  font-family: var(--font-ui);
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 24px 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 390px;
+  min-height: 844px;
+  background: var(--hell-black);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px #2A2A35,
+    0 24px 80px rgba(0,0,0,0.8),
+    0 0 60px rgba(255,59,59,0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 440px) {
+  body { padding: 0; }
+  #root { width: 100%; min-height: 100vh; }
+}
+
+input { color-scheme: dark; font-family: var(--font-ui); }
+input::placeholder { color: var(--text-dim); }
+button { font-family: var(--font-ui); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2A2A35; border-radius: 2px; }
+
+@keyframes floatUp {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-60px); }
+}
+
+@keyframes hellpulse {
+  from { box-shadow: 0 0 6px #FF3B3B30; }
+  to   { box-shadow: 0 0 14px #FF3B3B80; }
+}
+
+@keyframes activePulse {
+  from { box-shadow: 0 0 8px #3DDCFF15; }
+  to   { box-shadow: 0 0 18px #3DDCFF40; }
+}
