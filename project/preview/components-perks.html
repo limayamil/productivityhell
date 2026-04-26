@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .perk {
+    background: var(--hell-surface);
+    border-radius: var(--radius-md);
+    padding: 14px 12px 12px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative; overflow: hidden;
+    box-shadow: 3px 3px 0px #000;
+    transition: transform 150ms var(--ease-snap);
+    cursor: pointer;
+  }
+  .perk:hover { transform: translateY(-2px); }
+  .perk-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .perk-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .rarity-badge { font-family: var(--font-ui); font-size: 8px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 5px; border-radius: 2px; }
+  .perk-name { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; }
+  .perk-desc { font-family: var(--font-ui); font-size: 10px; color: var(--text-secondary); line-height: 1.4; flex: 1; }
+  .perk-effect { font-family: var(--font-mono); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 3px; text-align: center; }
+  .perk-cat { font-family: var(--font-ui); font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+
+  /* Common */
+  .p-common { border: 1px solid #8A8A9A; }
+  .p-common .perk-name { color: #8A8A9A; }
+  .p-common .rarity-badge { background: #8A8A9A20; color: #8A8A9A; }
+  .p-common .perk-effect { background: #8A8A9A15; color: #8A8A9A; }
+
+  /* Rare */
+  .p-rare { border: 2px solid #3DDCFF; box-shadow: 3px 3px 0px #000, 0 0 12px #3DDCFF30; }
+  .p-rare .perk-name { color: #3DDCFF; }
+  .p-rare .rarity-badge { background: #3DDCFF20; color: #3DDCFF; }
+  .p-rare .perk-effect { background: #3DDCFF15; color: #3DDCFF; }
+
+  /* Epic */
+  .p-epic { border: 2px solid #8F5CFF; box-shadow: 3px 3px 0px #000, 0 0 16px #8F5CFF40; }
+  .p-epic .perk-name { color: #8F5CFF; }
+  .p-epic .rarity-badge { background: #8F5CFF20; color: #8F5CFF; }
+  .p-epic .perk-effect { background: #8F5CFF15; color: #8F5CFF; }
+
+  /* Legendary */
+  .p-legendary { border: 2px solid #FFD166; box-shadow: 3px 3px 0px #000, 0 0 20px #FFD16650; }
+  .p-legendary .perk-name { color: #FFD166; }
+  .p-legendary .rarity-badge { background: #FFD16620; color: #FFD166; }
+  .p-legendary .perk-effect { background: #FFD16615; color: #FFD166; }
+
+  /* Cursed */
+  .p-cursed { border: 2px solid #FF3B3B; box-shadow: 3px 3px 0px #000, 0 0 16px #FF3B3B50; }
+  .p-cursed .perk-name { color: #FF3B3B; }
+  .p-cursed .rarity-badge { background: #FF3B3B20; color: #FF3B3B; }
+  .p-cursed .perk-effect { background: #FF3B3B15; color: #FF3B3B; }
+
+  /* Hellborn */
+  .p-hellborn { border: 2px solid transparent; background-clip: padding-box; position: relative; }
+  .p-hellborn::after { content:''; position:absolute; inset:-2px; border-radius: calc(var(--radius-md) + 2px); background: linear-gradient(135deg, #FF3B3B, #8F5CFF); z-index:-1; animation: hbspin 3s linear infinite; }
+  @keyframes hbspin { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+  .p-hellborn .perk-name { background: linear-gradient(90deg, #FF3B3B, #8F5CFF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .p-hellborn .rarity-badge { background: linear-gradient(90deg,#FF3B3B20,#8F5CFF20); color: #FFD166; }
+  .p-hellborn .perk-effect { background: linear-gradient(90deg,#FF3B3B15,#8F5CFF15); color: #FFD166; }
+</style>
+</head>
+<body>
+<div class="grid">
+  <div class="perk p-common">
+    <div class="perk-header">
+      <div class="perk-icon" style="background:#8A8A9A15;">⚙</div>
+      <div class="rarity-badge">Common</div>
+    </div>
+    <div class="perk-name">Inbox Exorcist</div>
+    <div class="perk-desc">Complete admin tasks for bonus flat points per sacrifice.</div>
+    <div class="perk-effect">+50 pts / Admin task</div>
+    <div class="perk-cat">Admin · Passive</div>
+  </div>
+
+  <div class="perk p-rare">
+    <div class="perk-header">
+      <div class="perk-icon" style="background:#3DDCFF15;">⏱</div>
+      <div class="rarity-badge">Rare</div>
+    </div>
+    <div class="perk-name">Deep Work Demon</div>
+    <div class="perk-desc">Longer tasks yield greater rewards. The deep burns brighter.</div>
+    <div class="perk-effect">×1.5 pts on 30+ min tasks</div>
+    <div class="perk-cat">All · Passive</div>
+  </div>
+
+  <div class="perk p-epic">
+    <div class="perk-header">
+      <div class="perk-icon" style="background:#8F5CFF15;">◆</div>
+      <div class="rarity-badge">Epic</div>
+    </div>
+    <div class="perk-name">Critical Combo</div>
+    <div class="perk-desc">3 high-priority tasks in one hour. Then the score doubles.</div>
+    <div class="perk-effect">×2 final score on trigger</div>
+    <div class="perk-cat">High Priority · Trigger</div>
+  </div>
+
+  <div class="perk p-legendary">
+    <div class="perk-header">
+      <div class="perk-icon" style="background:#FFD16615;">★</div>
+      <div class="rarity-badge">Legendary</div>
+    </div>
+    <div class="perk-name">Hell Multiplier</div>
+    <div class="perk-desc">Every task completed without breaking your streak adds to the fire.</div>
+    <div class="perk-effect">+0.25× per streak task</div>
+    <div class="perk-cat">All · Stack</div>
+  </div>
+
+  <div class="perk p-cursed">
+    <div class="perk-header">
+      <div class="perk-icon" style="background:#FF3B3B15;">✕</div>
+      <div class="rarity-badge">Cursed</div>
+    </div>
+    <div class="perk-name">Burnout Tax</div>
+    <div class="perk-desc">Triple the points. Half the time. The deal is already made.</div>
+    <div class="perk-effect">×3 pts · −15 min round</div>
+    <div class="perk-cat">All · Risk/Reward</div>
+  </div>
+
+  <div class="perk p-hellborn" style="z-index:0;">
+    <div class="perk-header">
+      <div class="perk-icon" style="background:rgba(255,59,59,0.1);">∞</div>
+      <div class="rarity-badge">Hellborn</div>
+    </div>
+    <div class="perk-name">Last Minute Pact</div>
+    <div class="perk-desc">Final 10 min tasks are legendary. Fail, and the contract collects.</div>
+    <div class="perk-effect">×2 pts · lose 20% on fail</div>
+    <div class="perk-cat">All · High Risk</div>
+  </div>
+</div>
+</body>
+</html>

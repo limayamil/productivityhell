@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 24px; }
+  .row { display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--hell-border-soft); }
+  .row:last-child { border-bottom: none; }
+  .meta { width: 100px; flex-shrink: 0; font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+  .score-xl  { font-family: var(--font-mono); font-size: 56px; font-weight: 700; color: var(--loot-gold); line-height: 1; letter-spacing: 0.02em; }
+  .score-lg  { font-family: var(--font-mono); font-size: 36px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+  .score-md  { font-family: var(--font-mono); font-size: 20px; color: var(--arc-blue); line-height: 1; }
+  .score-sm  { font-family: var(--font-mono); font-size: 14px; color: var(--text-secondary); }
+  .timer     { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--hell-red); letter-spacing: 0.04em; }
+  .mult      { font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--void-violet); letter-spacing: 0.02em; }
+</style>
+</head>
+<body>
+  <div class="row"><div class="meta">score-xl · 56px</div><div class="score-xl">4,820</div></div>
+  <div class="row"><div class="meta">score-lg · 36px</div><div class="score-lg">2,150 / 3,000</div></div>
+  <div class="row"><div class="meta">timer · 28px</div><div class="timer">23:47</div></div>
+  <div class="row"><div class="meta">multiplier · 24px</div><div class="mult">×2.75</div></div>
+  <div class="row"><div class="meta">score-md · 20px</div><div class="score-md">+350 pts</div></div>
+  <div class="row"><div class="meta">score-sm · 14px</div><div class="score-sm">Base: 200 · Perk: +150 · Combo: ×1.5</div></div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 24px; }
+  .row { display: flex; align-items: baseline; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--hell-border-soft); }
+  .row:last-child { border-bottom: none; }
+  .meta { width: 110px; flex-shrink: 0; }
+  .sz { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+  .wt { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+  .sample-xl  { font-family: var(--font-ui); font-size: 20px; font-weight: 600; color: var(--text-primary); }
+  .sample-lg  { font-family: var(--font-ui); font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .sample-md  { font-family: var(--font-ui); font-size: 14px; font-weight: 400; color: var(--text-primary); }
+  .sample-sm  { font-family: var(--font-ui); font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+  .sample-xs  { font-family: var(--font-ui); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); }
+  .sample-label { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="meta"><div class="sz">20px / 600</div></div>
+    <div class="sample-xl">Deep Work Demon activated</div>
+  </div>
+  <div class="row">
+    <div class="meta"><div class="sz">16px / 600</div></div>
+    <div class="sample-lg">Write campaign brief for Q3</div>
+  </div>
+  <div class="row">
+    <div class="meta"><div class="sz">14px / 400</div></div>
+    <div class="sample-md">Complete before the hour ends. Focus pact active. +50pts on success.</div>
+  </div>
+  <div class="row">
+    <div class="meta"><div class="sz">12px / 400</div></div>
+    <div class="sample-sm">Task sacrificed. Hell bonus applied. Multiplier preserved.</div>
+  </div>
+  <div class="row">
+    <div class="meta"><div class="sz">10px / 700 caps</div></div>
+    <div class="sample-xs">Priority · Category · Est. 20 min</div>
+  </div>
+  <div class="row">
+    <div class="meta"><div class="sz">9px / 700 caps</div></div>
+    <div class="sample-label">Round Status · Perks Active · Base Score</div>
+  </div>
+</body>
+</html>

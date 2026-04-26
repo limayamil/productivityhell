@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .swatch { border-radius: var(--radius-md); overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+  .swatch-color { height: 56px; }
+  .swatch-info { background: var(--hell-surface); padding: 8px; }
+  .swatch-name { font-family: var(--font-ui); font-size: 10px; font-weight: 600; color: var(--text-primary); }
+  .swatch-hex { font-family: var(--font-mono); font-size: 9px; color: var(--text-secondary); margin-top: 2px; }
+  .section-label { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="section-label">Surfaces</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-color" style="background:#0B0B10; border-bottom:1px solid #2A2A35;"></div><div class="swatch-info"><div class="swatch-name">Hell Black</div><div class="swatch-hex">#0B0B10</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#13131C;"></div><div class="swatch-info"><div class="swatch-name">Surface</div><div class="swatch-hex">#13131C</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#1C1C2A;"></div><div class="swatch-info"><div class="swatch-name">Elevated</div><div class="swatch-hex">#1C1C2A</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#2A2A35;"></div><div class="swatch-info"><div class="swatch-name">Border</div><div class="swatch-hex">#2A2A35</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#4A4A5A;"></div><div class="swatch-info"><div class="swatch-name">Dim</div><div class="swatch-hex">#4A4A5A</div></div></div>
+</div>
+<div class="section-label">Brand Accents</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-color" style="background:#FF3B3B; box-shadow: 0 0 12px #FF3B3B60;"></div><div class="swatch-info"><div class="swatch-name">Hell Red</div><div class="swatch-hex">#FF3B3B</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#FFD166; box-shadow: 0 0 12px #FFD16660;"></div><div class="swatch-info"><div class="swatch-name">Loot Gold</div><div class="swatch-hex">#FFD166</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#8F5CFF; box-shadow: 0 0 12px #8F5CFF60;"></div><div class="swatch-info"><div class="swatch-name">Void Violet</div><div class="swatch-hex">#8F5CFF</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#7CFF6B; box-shadow: 0 0 12px #7CFF6B60;"></div><div class="swatch-info"><div class="swatch-name">Acid Green</div><div class="swatch-hex">#7CFF6B</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#3DDCFF; box-shadow: 0 0 12px #3DDCFF60;"></div><div class="swatch-info"><div class="swatch-name">Arc Blue</div><div class="swatch-hex">#3DDCFF</div></div></div>
+</div>
+<div class="section-label">Text</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-color" style="background:#F0EDE8;"></div><div class="swatch-info"><div class="swatch-name">Primary</div><div class="swatch-hex">#F0EDE8</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#8A8A9A;"></div><div class="swatch-info"><div class="swatch-name">Secondary</div><div class="swatch-hex">#8A8A9A</div></div></div>
+  <div class="swatch"><div class="swatch-color" style="background:#4A4A5A;"></div><div class="swatch-info"><div class="swatch-name">Dim</div><div class="swatch-hex">#4A4A5A</div></div></div>
+</div>
+</body>
+</html>

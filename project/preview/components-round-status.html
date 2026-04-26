@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 20px; }
+  .round-card {
+    background: var(--hell-surface);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border: 1px solid var(--hell-border);
+    box-shadow: 3px 3px 0px #000;
+    margin-bottom: 12px;
+  }
+  .round-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .round-id { font-family: var(--font-display); font-size: 22px; color: var(--text-primary); letter-spacing: 0.04em; }
+  .round-status { font-family: var(--font-ui); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: var(--radius-pill); }
+  .timer-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+  .timer-val { font-family: var(--font-mono); font-size: 32px; font-weight: 700; line-height: 1; }
+  .timer-label { font-family: var(--font-ui); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+  .score-row { display: flex; gap: 24px; }
+  .score-block .val { font-family: var(--font-mono); font-size: 20px; font-weight: 700; line-height: 1; }
+  .score-block .lbl { font-family: var(--font-ui); font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-top: 2px; }
+  .progress-bar { height: 6px; background: var(--hell-border); border-radius: 2px; overflow: hidden; margin-top: 10px; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+  /* Safe state */
+  .state-safe { border-color: #7CFF6B40; }
+  .state-safe .timer-val { color: #7CFF6B; }
+  .state-safe .round-status { background: #7CFF6B15; color: #7CFF6B; }
+  .state-safe .progress-fill { background: #7CFF6B; box-shadow: 0 0 6px #7CFF6B80; }
+
+  /* Hell mode */
+  .state-hell { border-color: #FF3B3B60; box-shadow: 3px 3px 0px #000, 0 0 14px #FF3B3B30; animation: hellpulse 1.5s ease-in-out infinite alternate; }
+  .state-hell .timer-val { color: #FF3B3B; text-shadow: 0 0 12px #FF3B3B80; }
+  .state-hell .round-status { background: #FF3B3B20; color: #FF3B3B; }
+  .state-hell .progress-fill { background: linear-gradient(90deg, #FF3B3B, #FFD166); box-shadow: 0 0 8px #FF3B3B80; }
+  @keyframes hellpulse { from{box-shadow: 3px 3px 0 #000, 0 0 10px #FF3B3B20} to{box-shadow: 3px 3px 0 #000, 0 0 20px #FF3B3B50} }
+
+  /* Combo state */
+  .state-combo { border-color: #3DDCFF50; box-shadow: 3px 3px 0px #000, 0 0 12px #3DDCFF25; }
+  .state-combo .timer-val { color: #3DDCFF; }
+  .state-combo .round-status { background: #3DDCFF15; color: #3DDCFF; }
+  .state-combo .progress-fill { background: linear-gradient(90deg, #3DDCFF, #8F5CFF); box-shadow: 0 0 6px #3DDCFF60; }
+
+  .section-label { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+  <div class="section-label">Safe</div>
+  <div class="round-card state-safe">
+    <div class="round-header">
+      <div class="round-id">Round 03 · 10:00</div>
+      <div class="round-status">Safe</div>
+    </div>
+    <div class="timer-row">
+      <div><div class="timer-val">38:22</div><div class="timer-label">remaining</div></div>
+      <div class="score-row">
+        <div class="score-block"><div class="val" style="color:#FFD166;">1,240</div><div class="lbl">Points</div></div>
+        <div class="score-block"><div class="val" style="color:#7CFF6B;">×1.5</div><div class="lbl">Mult</div></div>
+      </div>
+    </div>
+    <div class="timer-label">1,240 / 2,000 pts</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:62%;"></div></div>
+  </div>
+
+  <div class="section-label">Hell Mode</div>
+  <div class="round-card state-hell">
+    <div class="round-header">
+      <div class="round-id">Round 05 · 14:00</div>
+      <div class="round-status">⚡ Hell Mode</div>
+    </div>
+    <div class="timer-row">
+      <div><div class="timer-val">08:47</div><div class="timer-label">remaining</div></div>
+      <div class="score-row">
+        <div class="score-block"><div class="val" style="color:#FFD166;">3,880</div><div class="lbl">Points</div></div>
+        <div class="score-block"><div class="val" style="color:#FF3B3B;">×3.0</div><div class="lbl">Mult</div></div>
+      </div>
+    </div>
+    <div class="timer-label" style="color:#FF3B3B;">3,880 / 5,000 pts · The hour demands more.</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:78%;"></div></div>
+  </div>
+
+  <div class="section-label">Combo Active</div>
+  <div class="round-card state-combo">
+    <div class="round-header">
+      <div class="round-id">Round 02 · 09:00</div>
+      <div class="round-status">◉ Combo ×4</div>
+    </div>
+    <div class="timer-row">
+      <div><div class="timer-val">22:15</div><div class="timer-label">remaining</div></div>
+      <div class="score-row">
+        <div class="score-block"><div class="val" style="color:#FFD166;">2,600</div><div class="lbl">Points</div></div>
+        <div class="score-block"><div class="val" style="color:#3DDCFF;">×2.25</div><div class="lbl">Mult</div></div>
+      </div>
+    </div>
+    <div class="timer-label" style="color:#3DDCFF;">2,600 / 3,500 pts · Combo ignited.</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:74%;"></div></div>
+  </div>
+</body>
+</html>

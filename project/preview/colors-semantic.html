@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; padding: 10px 12px; background: var(--hell-surface); border-radius: var(--radius-md); border: 1px solid var(--hell-border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .role { font-family: var(--font-ui); font-size: 10px; font-weight: 600; color: var(--text-secondary); flex: 1; text-transform: uppercase; letter-spacing: 0.06em; }
+  .val { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+  .section-label { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; margin-top: 14px; }
+  .cat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .cat { border-radius: var(--radius-md); padding: 8px 6px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; margin: 0 auto 4px; }
+  .cat-name { font-family: var(--font-ui); font-size: 9px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+</style>
+</head>
+<body>
+<div class="section-label">Round Status</div>
+<div class="grid">
+  <div class="row"><div class="dot" style="background:#7CFF6B; box-shadow:0 0 6px #7CFF6B80;"></div><div class="role">Safe</div><div class="val">#7CFF6B</div></div>
+  <div class="row"><div class="dot" style="background:#FFD166; box-shadow:0 0 6px #FFD16680;"></div><div class="role">Risky</div><div class="val">#FFD166</div></div>
+  <div class="row"><div class="dot" style="background:#FF3B3B; box-shadow:0 0 6px #FF3B3B80;"></div><div class="role">Hell Mode</div><div class="val">#FF3B3B</div></div>
+  <div class="row"><div class="dot" style="background:#3DDCFF; box-shadow:0 0 6px #3DDCFF80;"></div><div class="role">Combo Active</div><div class="val">#3DDCFF</div></div>
+</div>
+<div class="section-label">Priority</div>
+<div class="grid">
+  <div class="row"><div class="dot" style="background:#8A8A9A;"></div><div class="role">Low</div><div class="val">#8A8A9A</div></div>
+  <div class="row"><div class="dot" style="background:#FFD166;"></div><div class="role">Medium</div><div class="val">#FFD166</div></div>
+  <div class="row"><div class="dot" style="background:#FF3B3B;"></div><div class="role">High</div><div class="val">#FF3B3B</div></div>
+  <div class="row"><div class="dot" style="background:#8F5CFF; box-shadow:0 0 6px #8F5CFF80;"></div><div class="role">Critical</div><div class="val">#8F5CFF</div></div>
+</div>
+<div class="section-label">Categories</div>
+<div class="cat-grid">
+  <div class="cat" style="background:#FF3B3B10; border-color:#FF3B3B30;"><div class="cat-dot" style="background:#FF3B3B;"></div><div class="cat-name">Marketing</div></div>
+  <div class="cat" style="background:#3DDCFF10; border-color:#3DDCFF30;"><div class="cat-dot" style="background:#3DDCFF;"></div><div class="cat-name">Dev</div></div>
+  <div class="cat" style="background:#FFD16610; border-color:#FFD16630;"><div class="cat-dot" style="background:#FFD166;"></div><div class="cat-name">Meetings</div></div>
+  <div class="cat" style="background:#8A8A9A10; border-color:#8A8A9A30;"><div class="cat-dot" style="background:#8A8A9A;"></div><div class="cat-name">Admin</div></div>
+  <div class="cat" style="background:#8F5CFF10; border-color:#8F5CFF30;"><div class="cat-dot" style="background:#8F5CFF;"></div><div class="cat-name">Creative</div></div>
+  <div class="cat" style="background:#7CFF6B10; border-color:#7CFF6B30;"><div class="cat-dot" style="background:#7CFF6B;"></div><div class="cat-name">Personal</div></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .label { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); width: 80px; flex-shrink: 0; }
+  /* Rank badges */
+  .rank { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.05em; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid; display: inline-block; }
+  /* Status pills */
+  .status { font-family: var(--font-ui); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: var(--radius-pill); display: inline-flex; align-items: center; gap: 5px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  /* Priority chips */
+  .chip { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; }
+  /* Category tags */
+  .cat { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; border: 1px solid; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="label">Ranks</div>
+    <span class="rank" style="color:#4A4A5A; border-color:#2A2A35;">F · Doomed</span>
+    <span class="rank" style="color:#8A8A9A; border-color:#8A8A9A40;">D · Barely Alive</span>
+    <span class="rank" style="color:#FFD166; border-color:#FFD16640;">C · Survived</span>
+    <span class="rank" style="color:#FF3B3B; border-color:#FF3B3B40; box-shadow:0 0 8px #FF3B3B30;">B · Productive Sinner</span>
+    <span class="rank" style="color:#3DDCFF; border-color:#3DDCFF40; box-shadow:0 0 8px #3DDCFF30;">A · Focus Fiend</span>
+  </div>
+  <div class="row">
+    <div class="label">S-Ranks</div>
+    <span class="rank" style="color:#8F5CFF; border-color:#8F5CFF60; box-shadow:0 0 12px #8F5CFF40;">S · Hellbreaker</span>
+    <span class="rank" style="color:#FFD166; border-color:#FFD16660; box-shadow:0 0 14px #FFD16650; font-size:16px;">SS · Productivity Demon</span>
+    <span class="rank" style="background:linear-gradient(90deg,#FF3B3B,#8F5CFF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; border-color:#FF3B3B; box-shadow:0 0 16px #8F5CFF50; font-size:17px;">SSS · God Mode</span>
+  </div>
+  <div class="row">
+    <div class="label">Round Status</div>
+    <span class="status" style="background:#7CFF6B15; color:#7CFF6B; border:1px solid #7CFF6B40;"><span class="status-dot" style="background:#7CFF6B;"></span>Safe</span>
+    <span class="status" style="background:#FFD16615; color:#FFD166; border:1px solid #FFD16640;"><span class="status-dot" style="background:#FFD166;"></span>Risky</span>
+    <span class="status" style="background:#FF3B3B15; color:#FF3B3B; border:1px solid #FF3B3B40; animation:pulse 1.2s ease-in-out infinite alternate;"><span class="status-dot" style="background:#FF3B3B;"></span>Hell Mode</span>
+    <span class="status" style="background:#3DDCFF15; color:#3DDCFF; border:1px solid #3DDCFF40;"><span class="status-dot" style="background:#3DDCFF;"></span>Combo Active</span>
+    @keyframes pulse { from{box-shadow:0 0 6px #FF3B3B40} to{box-shadow:0 0 14px #FF3B3B80} }
+  </div>
+  <div class="row">
+    <div class="label">Priority</div>
+    <span class="chip" style="background:#8A8A9A20; color:#8A8A9A;">Low</span>
+    <span class="chip" style="background:#FFD16620; color:#FFD166;">Medium</span>
+    <span class="chip" style="background:#FF3B3B20; color:#FF3B3B;">High</span>
+    <span class="chip" style="background:#8F5CFF20; color:#8F5CFF; box-shadow:0 0 6px #8F5CFF40;">Critical</span>
+  </div>
+  <div class="row">
+    <div class="label">Categories</div>
+    <span class="cat" style="color:#FF3B3B; border-color:#FF3B3B40; background:#FF3B3B10;">Marketing</span>
+    <span class="cat" style="color:#3DDCFF; border-color:#3DDCFF40; background:#3DDCFF10;">Dev</span>
+    <span class="cat" style="color:#FFD166; border-color:#FFD16640; background:#FFD16610;">Meetings</span>
+    <span class="cat" style="color:#8A8A9A; border-color:#8A8A9A40; background:#8A8A9A10;">Admin</span>
+    <span class="cat" style="color:#8F5CFF; border-color:#8F5CFF40; background:#8F5CFF10;">Creative</span>
+    <span class="cat" style="color:#7CFF6B; border-color:#7CFF6B40; background:#7CFF6B10;">Personal</span>
+  </div>
+</body>
+</html>

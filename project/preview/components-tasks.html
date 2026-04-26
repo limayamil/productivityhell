@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .task {
+    background: var(--hell-surface);
+    border: 1px solid var(--hell-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 2px 2px 0px #000;
+    position: relative; overflow: hidden;
+  }
+  .task::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+  .task-low::before { background: #8A8A9A; }
+  .task-med::before { background: #FFD166; }
+  .task-high::before { background: #FF3B3B; box-shadow: 0 0 6px #FF3B3B80; }
+  .task-crit::before { background: #8F5CFF; box-shadow: 0 0 8px #8F5CFF80; }
+  .task-done { opacity: 0.45; }
+  .task-done .task-title { text-decoration: line-through; }
+  .task-check {
+    width: 28px; height: 28px; border-radius: var(--radius-sm);
+    border: 1px solid var(--hell-border); background: transparent;
+    flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--acid-green);
+  }
+  .task-check.done { background: var(--acid-green); border-color: var(--acid-green); color: var(--hell-black); font-weight: 900; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-title { font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { display: flex; gap: 8px; margin-top: 3px; align-items: center; }
+  .task-tag { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 1px 6px; border-radius: 2px; }
+  .task-pts { font-family: var(--font-mono); font-size: 11px; color: var(--loot-gold); margin-left: auto; flex-shrink: 0; font-weight: 700; }
+  .task-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+  <div class="task task-low">
+    <div class="task-check"></div>
+    <div class="task-body">
+      <div class="task-title">Review monthly analytics report</div>
+      <div class="task-meta">
+        <span class="task-tag" style="background:#8A8A9A20; color:#8A8A9A;">Admin</span>
+        <span class="task-tag" style="background:#8A8A9A15; color:#8A8A9A;">Low</span>
+        <span class="task-time">20 min</span>
+      </div>
+    </div>
+    <div class="task-pts">+80</div>
+  </div>
+
+  <div class="task task-med">
+    <div class="task-check"></div>
+    <div class="task-body">
+      <div class="task-title">Write Q3 campaign brief</div>
+      <div class="task-meta">
+        <span class="task-tag" style="background:#FF3B3B20; color:#FF3B3B;">Marketing</span>
+        <span class="task-tag" style="background:#FFD16620; color:#FFD166;">Medium</span>
+        <span class="task-time">30 min</span>
+      </div>
+    </div>
+    <div class="task-pts">+150</div>
+  </div>
+
+  <div class="task task-high">
+    <div class="task-check"></div>
+    <div class="task-body">
+      <div class="task-title">Fix auth bug in staging env</div>
+      <div class="task-meta">
+        <span class="task-tag" style="background:#3DDCFF20; color:#3DDCFF;">Dev</span>
+        <span class="task-tag" style="background:#FF3B3B20; color:#FF3B3B;">High</span>
+        <span class="task-time">45 min</span>
+      </div>
+    </div>
+    <div class="task-pts">+280</div>
+  </div>
+
+  <div class="task task-crit">
+    <div class="task-check"></div>
+    <div class="task-body">
+      <div class="task-title">Client presentation deck · FINAL</div>
+      <div class="task-meta">
+        <span class="task-tag" style="background:#8F5CFF20; color:#8F5CFF;">Creative</span>
+        <span class="task-tag" style="background:#8F5CFF20; color:#8F5CFF;">Critical</span>
+        <span class="task-time">60 min</span>
+      </div>
+    </div>
+    <div class="task-pts" style="color:#8F5CFF; text-shadow:0 0 8px #8F5CFF80;">+500</div>
+  </div>
+
+  <div class="task task-done task-low">
+    <div class="task-check done">✓</div>
+    <div class="task-body">
+      <div class="task-title">Reply to team Slack threads</div>
+      <div class="task-meta">
+        <span class="task-tag" style="background:#8A8A9A15; color:#8A8A9A;">Admin</span>
+        <span class="task-tag" style="background:#8A8A9A15; color:#8A8A9A;">Low</span>
+        <span class="task-time">10 min</span>
+      </div>
+    </div>
+    <div class="task-pts">+60</div>
+  </div>
+</body>
+</html>

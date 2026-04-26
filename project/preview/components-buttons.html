@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { background: var(--hell-black); padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .label { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); width: 80px; flex-shrink: 0; }
+  .btn {
+    font-family: var(--font-ui); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 10px 20px; border-radius: var(--radius-md);
+    border: none; cursor: pointer; transition: all var(--dur-fast) var(--ease-snap);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--hell-red); color: #fff;
+    box-shadow: 3px 3px 0px #000, 0 0 12px var(--hell-red-dim);
+  }
+  .btn-primary:hover { filter: brightness(1.15); }
+  .btn-gold {
+    background: var(--loot-gold); color: var(--hell-black);
+    box-shadow: 3px 3px 0px #000, 0 0 12px var(--loot-gold-dim);
+  }
+  .btn-gold:hover { filter: brightness(1.1); }
+  .btn-ghost {
+    background: transparent; color: var(--text-primary);
+    border: 1px solid var(--hell-border); box-shadow: 2px 2px 0px #000;
+  }
+  .btn-ghost:hover { border-color: var(--text-secondary); background: var(--hell-elevated); }
+  .btn-violet {
+    background: var(--void-violet); color: #fff;
+    box-shadow: 3px 3px 0px #000, 0 0 12px var(--void-violet-dim);
+  }
+  .btn-danger {
+    background: transparent; color: var(--hell-red);
+    border: 1px solid var(--hell-red); box-shadow: 2px 2px 0px #000;
+  }
+  .btn-sm { padding: 6px 12px; font-size: 10px; }
+  .btn-lg { padding: 14px 28px; font-size: 14px; }
+  .btn-disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.5); }
+  .btn-complete {
+    background: var(--acid-green); color: var(--hell-black);
+    box-shadow: 3px 3px 0px #000, 0 0 12px var(--acid-green-dim);
+    font-family: var(--font-display); font-size: 16px; letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+  <div class="row"><div class="label">Primary</div><button class="btn btn-primary">Complete Task</button><button class="btn btn-primary btn-sm">Complete</button><button class="btn btn-primary btn-lg">Sacrifice Task</button></div>
+  <div class="row"><div class="label">Reward</div><button class="btn btn-gold">Claim Perk</button><button class="btn btn-gold btn-sm">+350 pts</button></div>
+  <div class="row"><div class="label">Special</div><button class="btn btn-violet">Select Perk</button><button class="btn btn-complete">✓ Done</button></div>
+  <div class="row"><div class="label">Ghost</div><button class="btn btn-ghost">Skip Round</button><button class="btn btn-ghost btn-sm">Details</button></div>
+  <div class="row"><div class="label">Danger</div><button class="btn btn-danger">Abandon Hour</button></div>
+  <div class="row"><div class="label">Disabled</div><button class="btn btn-primary btn-disabled" disabled>Complete Task</button><button class="btn btn-gold btn-disabled" disabled>Locked</button></div>
+</body>
+</html>

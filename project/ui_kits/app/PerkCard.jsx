@@ -1,0 +1,91 @@
+// PerkCard.jsx — Productivity Hell
+
+const RARITY_STYLES = {
+  common:    { color: '#8A8A9A', border: '#8A8A9A',  glow: 'none',                    bg: '#8A8A9A10' },
+  uncommon:  { color: '#7CFF6B', border: '#7CFF6B',  glow: '0 0 10px #7CFF6B30',      bg: '#7CFF6B10' },
+  rare:      { color: '#3DDCFF', border: '#3DDCFF',  glow: '0 0 14px #3DDCFF35',      bg: '#3DDCFF10' },
+  epic:      { color: '#8F5CFF', border: '#8F5CFF',  glow: '0 0 16px #8F5CFF40',      bg: '#8F5CFF10' },
+  legendary: { color: '#FFD166', border: '#FFD166',  glow: '0 0 20px #FFD16650',      bg: '#FFD16610' },
+  cursed:    { color: '#FF3B3B', border: '#FF3B3B',  glow: '0 0 16px #FF3B3B50',      bg: '#FF3B3B10' },
+  hellborn:  { color: '#FFD166', border: '#FF3B3B',  glow: '0 0 20px #8F5CFF50',      bg: '#FF3B3B08', gradient: true },
+};
+
+const PerkCard = ({ perk, onClick, selected, large }) => {
+  const r = RARITY_STYLES[perk.rarity] || RARITY_STYLES.common;
+  const [hovered, setHovered] = React.useState(false);
+
+  const perkCardStyles = {
+    card: {
+      background: r.bg || '#13131C',
+      border: `${large ? 2 : 1}px solid ${r.border}`,
+      borderRadius: 6,
+      padding: large ? '20px 16px 16px' : '12px 10px 10px',
+      display: 'flex', flexDirection: 'column', gap: large ? 10 : 6,
+      boxShadow: hovered
+        ? `3px 3px 0px #000, ${r.glow}`
+        : `2px 2px 0px #000, ${r.glow.replace(/[\d.]+\)$/, m => (parseFloat(m)*0.6).toFixed(2)+')')}`,
+      cursor: 'pointer', position: 'relative', overflow: 'hidden',
+      transform: hovered ? 'translateY(-3px) scale(1.02)' : selected ? 'scale(0.97)' : 'none',
+      transition: 'all 150ms cubic-bezier(0.22,1,0.36,1)',
+      outline: selected ? `2px solid ${r.color}` : 'none',
+      outlineOffset: 2,
+    },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    icon: {
+      width: large ? 40 : 28, height: large ? 40 : 28,
+      borderRadius: 4,
+      background: r.bg, border: `1px solid ${r.border}40`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: large ? 20 : 14, color: r.color,
+    },
+    rarityBadge: {
+      fontFamily: "'Space Grotesk', sans-serif",
+      fontSize: 8, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+      padding: '2px 6px', borderRadius: 2,
+      background: r.bg, color: r.color, border: `1px solid ${r.border}40`,
+    },
+    name: {
+      fontFamily: "'Bebas Neue', sans-serif",
+      fontSize: large ? 22 : 16, letterSpacing: '0.04em', textTransform: 'uppercase',
+      color: r.gradient ? undefined : r.color,
+      background: r.gradient ? 'linear-gradient(90deg,#FF3B3B,#8F5CFF)' : undefined,
+      WebkitBackgroundClip: r.gradient ? 'text' : undefined,
+      WebkitTextFillColor: r.gradient ? 'transparent' : undefined,
+      lineHeight: 1,
+    },
+    desc: {
+      fontFamily: "'Space Grotesk', sans-serif",
+      fontSize: large ? 11 : 9, color: '#8A8A9A', lineHeight: 1.4, flex: 1,
+    },
+    effect: {
+      fontFamily: "'Space Mono', monospace",
+      fontSize: large ? 11 : 9, fontWeight: 700,
+      padding: '4px 8px', borderRadius: 3, textAlign: 'center',
+      background: r.bg, color: r.color,
+      border: `1px solid ${r.border}30`,
+    },
+    cat: {
+      fontFamily: "'Space Grotesk', sans-serif",
+      fontSize: 8, fontWeight: 700, textTransform: 'uppercase',
+      letterSpacing: '0.08em', color: '#4A4A5A',
+    },
+  };
+
+  return (
+    <div style={perkCardStyles.card}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => onClick && onClick(perk.id)}>
+      <div style={perkCardStyles.header}>
+        <div style={perkCardStyles.icon}>{perk.icon}</div>
+        <div style={perkCardStyles.rarityBadge}>{perk.rarity}</div>
+      </div>
+      <div style={perkCardStyles.name}>{perk.name}</div>
+      <div style={perkCardStyles.desc}>{perk.desc}</div>
+      <div style={perkCardStyles.effect}>{perk.effect}</div>
+      <div style={perkCardStyles.cat}>{perk.category} · {perk.type}</div>
+    </div>
+  );
+};
+
+Object.assign(window, { PerkCard, RARITY_STYLES });

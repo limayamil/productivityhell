@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Productivity Hell — App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #111118; font-family: 'Space Grotesk', sans-serif; }
+  body { display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px 0; }
+  #root { width: 390px; min-height: 844px; background: #0B0B10; position: relative; overflow: hidden; border-radius: 0; box-shadow: 0 0 0 1px #2A2A35, 0 24px 80px rgba(0,0,0,0.8), 0 0 60px rgba(255,59,59,0.06); display: flex; flex-direction: column; }
+  @media (max-width: 440px) { body { padding: 0; } #root { width: 100%; min-height: 100vh; border-radius: 0; } }
+  input { color-scheme: dark; }
+  input::placeholder { color: #4A4A5A; }
+  button { font-family: 'Space Grotesk', sans-serif; }
+  * { -webkit-tap-highlight-color: transparent; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #2A2A35; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="TaskCard.jsx"></script>
+<script type="text/babel" src="PerkCard.jsx"></script>
+<script type="text/babel" src="Dashboard.jsx"></script>
+<script type="text/babel" src="TaskModal.jsx"></script>
+<script type="text/babel" src="PerkSelection.jsx"></script>
+<script type="text/babel" src="RoundSummary.jsx"></script>
+<script type="text/babel" src="DayView.jsx"></script>
+
+<script type="text/babel">
+
+// ── NAV BAR ──────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { id: 'dashboard', icon: '◉', label: 'Round'  },
+  { id: 'day',       icon: '▦', label: 'Day'    },
+  { id: 'perks',     icon: '◆', label: 'Perks'  },
+];
+
+const BottomNav = ({ screen, onNav }) => {
+  const navStyles = {
+    bar: { position: 'sticky', bottom: 0, background: '#0D0D14', borderTop: '1px solid #2A2A35', display: 'flex', zIndex: 50 },
+    item: (active) => ({
+      flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '10px 0 12px', cursor: 'pointer', gap: 3,
+      borderTop: active ? '2px solid #FF3B3B' : '2px solid transparent',
+      transition: 'border-color 150ms',
+    }),
+    icon: (active) => ({ fontSize: 16, color: active ? '#FF3B3B' : '#4A4A5A', lineHeight: 1 }),
+    label: (active) => ({ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: active ? '#F0EDE8' : '#4A4A5A' }),
+  };
+  return (
+    <div style={navStyles.bar}>
+      {NAV_ITEMS.map(item => (
+        <div key={item.id} style={navStyles.item(screen === item.id)} onClick={() => onNav(item.id)}>
+          <span style={navStyles.icon(screen === item.id)}>{item.icon}</span>
+          <span style={navStyles.label(screen === item.id)}>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── PERKS LIBRARY SCREEN ─────────────────────────────────────
+const PerksLibrary = () => {
+  const activePerks = [
+    { id:1, name:'Deep Work Demon', rarity:'rare',      icon:'⏱', desc:'Longer tasks yield greater rewards.', effect:'×1.5 pts on 30+ min tasks', category:'All', type:'Passive', active:true },
+    { id:2, name:'Hell Multiplier', rarity:'epic',      icon:'◆', desc:'Every task without a broken streak adds to the fire.', effect:'+0.25× per streak task', category:'All', type:'Stack', active:true },
+    { id:3, name:'Inbox Exorcist',  rarity:'common',    icon:'⚙', desc:'Complete admin tasks for flat bonus points.', effect:'+50 pts / Admin task', category:'Admin', type:'Passive', active:false },
+    { id:4, name:'Category Streak', rarity:'uncommon',  icon:'▲', desc:'Same category tasks stack a climbing multiplier.', effect:'+0.15× per same-cat task', category:'Any', type:'Stack', active:true },
+  ];
+
+  const plStyles = {
+    screen: { background: '#0B0B10', flex: 1, display: 'flex', flexDirection: 'column' },
+    header: { padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' },
+    title: { fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' },
+    sub: { fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 },
+    statsRow: { display: 'flex', gap: 0, padding: '10px 16px', borderBottom: '1px solid #2A2A35' },
+    statBlock: { flex: 1, textAlign: 'center' },
+    statVal: (c) => ({ fontFamily: "'Space Mono'", fontSize: 18, fontWeight: 700, color: c, lineHeight: 1 }),
+    statLabel: { fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A', marginTop: 3 },
+    divider: { width: 1, background: '#2A2A35' },
+    sectionLabel: { fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', padding: '12px 16px 8px' },
+    grid: { padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
+    inactiveNote: { fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', padding: '8px 16px 12px', fontStyle: 'italic' },
+  };
+
+  return (
+    <div style={plStyles.screen}>
+      <div style={plStyles.header}>
+        <div style={plStyles.title}>Perk Loadout</div>
+        <div style={plStyles.sub}>Active perks · Round 03</div>
+      </div>
+      <div style={plStyles.statsRow}>
+        <div style={plStyles.statBlock}><div style={plStyles.statVal('#8F5CFF')}>4</div><div style={plStyles.statLabel}>Owned</div></div>
+        <div style={plStyles.divider}></div>
+        <div style={plStyles.statBlock}><div style={plStyles.statVal('#7CFF6B')}>3</div><div style={plStyles.statLabel}>Active</div></div>
+        <div style={plStyles.divider}></div>
+        <div style={plStyles.statBlock}><div style={plStyles.statVal('#FFD166')}>×2.75</div><div style={plStyles.statLabel}>Mult</div></div>
+      </div>
+      <div style={plStyles.sectionLabel}>Active · {activePerks.filter(p=>p.active).length} perks</div>
+      <div style={plStyles.grid}>
+        {activePerks.filter(p => p.active).map(p => <PerkCard key={p.id} perk={p} large={false} />)}
+      </div>
+      <div style={plStyles.sectionLabel}>Inactive</div>
+      <div style={plStyles.grid}>
+        {activePerks.filter(p => !p.active).map(p => <PerkCard key={p.id} perk={p} large={false} />)}
+      </div>
+      <div style={plStyles.inactiveNote}>Earn new perks by completing rounds. Choose 1 of 3 after each hour.</div>
+    </div>
+  );
+};
+
+// ── ROOT APP ─────────────────────────────────────────────────
+const App = () => {
+  const [screen, setScreen] = React.useState('dashboard');
+  const [overlay, setOverlay] = React.useState(null); // 'taskModal' | 'roundSummary' | 'perkSelection'
+  const [tasks, setTasks] = React.useState(null);
+  const [scrollRef] = React.useState(React.createRef());
+
+  const handleAddTask = (task) => {
+    if (task && tasks) setTasks(t => [...t, task]);
+    setOverlay(null);
+  };
+
+  const appStyles = {
+    container: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+    scrollArea: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' },
+  };
+
+  const renderScreen = () => {
+    switch (screen) {
+      case 'dashboard': return <Dashboard onAddTask={() => setOverlay('taskModal')} onEndRound={() => setOverlay('roundSummary')} tasks={tasks} />;
+      case 'day': return <DayView onRoundSelect={() => setScreen('dashboard')} />;
+      case 'perks': return <PerksLibrary />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={appStyles.container}>
+      <div style={appStyles.scrollArea} ref={scrollRef}>
+        {renderScreen()}
+      </div>
+      <BottomNav screen={screen} onNav={setScreen} />
+
+      {overlay === 'taskModal' && (
+        <TaskModal onClose={() => setOverlay(null)} onAdd={handleAddTask} />
+      )}
+      {overlay === 'roundSummary' && (
+        <div style={{ position:'fixed', inset:0, zIndex:200, overflowY:'auto', background:'#0B0B10' }}>
+          <RoundSummary
+            score={4820}
+            onNext={() => { setOverlay(null); setScreen('dashboard'); }}
+            onPerkSelect={() => setOverlay('perkSelection')}
+          />
+        </div>
+      )}
+      {overlay === 'perkSelection' && (
+        <div style={{ position:'fixed', inset:0, zIndex:200, overflowY:'auto', background:'#0B0B10' }}>
+          <PerkSelection
+            onSelect={() => { setOverlay(null); setScreen('dashboard'); }}
+            roundScore={4820}
+            roundRank="A"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
