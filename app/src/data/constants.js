@@ -95,6 +95,18 @@ export const PERK_POOL = [
     description: 'Repeat the same kind of work and the fire stacks.',
     effect: { label: '+10% per same-category streak, max +50%', kind: 'sameCategoryStreak', stepPercent: 0.1, maxPercent: 0.5 },
   },
+  {
+    id: 'volatile-bounty',
+    name: 'Volatile Bounty',
+    rarity: 'rare',
+    icon: '2x',
+    trigger: 'task creation',
+    tags: ['category', 'chance'],
+    categoryAffinity: 'suggested',
+    desc: 'A marked category sometimes spawns tasks worth twice the trouble.',
+    description: 'A marked category sometimes spawns tasks worth twice the trouble.',
+    effect: { label: '50% chance created tasks in bound category are x2', kind: 'randomCategoryDouble', chance: 0.5, multiplier: 2 },
+  },
 ];
 
 export const CATEGORIES = [

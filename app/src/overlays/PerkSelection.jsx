@@ -31,16 +31,21 @@ function buildInsights(summary, categories = []) {
   const averageDuration = durations.length
     ? durations.reduce((sum, d) => sum + d, 0) / durations.length
     : 0;
+  const suggestedCategory = categories.length
+    ? categories[Math.floor(Math.random() * categories.length)]?.id
+    : dominantCategory || strugglingCategory;
 
   return {
     dominantCategory,
     strugglingCategory,
+    suggestedCategory,
     highPriorityCount,
     urgentCompleted,
     urgentFailed,
     averageDuration,
     dominantLabel: categoryLabel(categories, dominantCategory),
     strugglingLabel: categoryLabel(categories, strugglingCategory),
+    suggestedLabel: categoryLabel(categories, suggestedCategory),
   };
 }
 
@@ -58,6 +63,14 @@ function reasonFor(perk, insights) {
       score: 58,
       boundCategory: insights.strugglingCategory,
       recommendation: `Recovery: ${insights.strugglingLabel} tasks were left behind`,
+    };
+  }
+
+  if (perk.categoryAffinity === 'suggested' && insights.suggestedCategory) {
+    return {
+      score: 52,
+      boundCategory: insights.suggestedCategory,
+      recommendation: `Marked: ${insights.suggestedLabel} tasks may roll x2`,
     };
   }
 
@@ -94,6 +107,7 @@ function pickThree(ownedIds, summary, categories) {
 
   const choices = [];
   pushUnique(choices, scored.find(p => p.boundCategory));
+  pushUnique(choices, scored.find(p => p.categoryAffinity === 'suggested'));
 
   const firstTag = choices[0]?.tags?.[0];
   pushUnique(choices, scored.find(p => p.tags?.[0] !== firstTag && !p.boundCategory));

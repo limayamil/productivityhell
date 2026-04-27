@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import TaskCard from '../components/TaskCard';
+import PerkIcon from '../components/PerkIcon';
+import PerkCard from '../components/PerkCard';
 import { TARGET_SCORE } from '../data/constants';
 
 const STATUS_MAP = {
@@ -28,6 +30,7 @@ function startLabel(startedAt, number) {
 export default function Dashboard({ round, perks, categories, onAddTask, onCompleteTask }) {
   const [, setTick] = useState(0);
   const [floaters, setFloaters] = useState([]);
+  const [hoveredPerk, setHoveredPerk] = useState(null);
 
   useEffect(() => {
     const t = setInterval(() => setTick(n => n + 1), 1000);
@@ -58,6 +61,28 @@ export default function Dashboard({ round, perks, categories, onAddTask, onCompl
     const fid = Date.now() + Math.random();
     setFloaters(f => [...f, { id: fid, text: `+${earned}`, x: Math.random() * 60 + 20 }]);
     setTimeout(() => setFloaters(f => f.filter(fl => fl.id !== fid)), 900);
+  };
+
+  const perkWithAffinityLabel = (perk) => {
+    if (!perk.boundCategory) return perk;
+    const label = categories?.find(c => c.id === perk.boundCategory)?.label || perk.boundCategory;
+    return { ...perk, recommendation: `Bound: ${label}` };
+  };
+
+  const showPerkDetails = (perk, event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const width = 176;
+    const gap = 8;
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+    const belowTop = rect.bottom + gap;
+    const top = belowTop + 190 > window.innerHeight
+      ? Math.max(12, rect.top - 190 - gap)
+      : belowTop;
+
+    setHoveredPerk({
+      perk: perkWithAffinityLabel(perk),
+      position: { top, left, width },
+    });
   };
 
   return (
@@ -158,16 +183,38 @@ export default function Dashboard({ round, perks, categories, onAddTask, onCompl
         {activePerks.map(p => {
           const c = RARITY_COLORS[p.rarity] || '#8A8A9A';
           return (
-            <span key={p.id} style={{
+            <span
+              key={p.id}
+              style={{
               fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
               padding: '3px 8px', borderRadius: 100, background: c + '15', color: c, border: `1px solid ${c}50`,
               display: 'inline-flex', alignItems: 'center', gap: 4,
-            }}>
-              {p.icon} {p.name.split(' ')[0]}
+                cursor: 'default',
+              }}
+              onMouseEnter={(event) => showPerkDetails(p, event)}
+              onMouseLeave={() => setHoveredPerk(null)}
+              onFocus={(event) => showPerkDetails(p, event)}
+              onBlur={() => setHoveredPerk(null)}
+              tabIndex={0}
+            >
+              <PerkIcon perk={p} size={12} strokeWidth={2.1} /> {p.name.split(' ')[0]}
             </span>
           );
         })}
       </div>
+
+      {hoveredPerk && (
+        <div style={{
+          position: 'fixed',
+          top: hoveredPerk.position.top,
+          left: hoveredPerk.position.left,
+          width: hoveredPerk.position.width,
+          zIndex: 300,
+          pointerEvents: 'none',
+        }}>
+          <PerkCard perk={hoveredPerk.perk} large={false} />
+        </div>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px 8px' }}>
         <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A' }}>

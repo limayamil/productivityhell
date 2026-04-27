@@ -12,6 +12,40 @@ import {
 export const STORAGE_KEY = 'productivity-hell:v1';
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
+const LEGACY_PERK_IDS = {
+  1: 'deep-work-demon',
+  2: 'patron-sigil',
+  3: 'critical-combo',
+  4: 'hell-multiplier',
+  5: 'burnout-tax',
+  6: 'last-minute-pact',
+  7: 'category-streak',
+  8: 'unfinished-altar',
+};
+
+function applyCreationPerks(state, task) {
+  const activePerks = (state.perks || []).filter(p => p.active && p.effect?.kind === 'randomCategoryDouble');
+  const matchingPerk = activePerks.find(perk => (
+    perk.boundCategory
+    && task.category === perk.boundCategory
+    && Math.random() < (perk.effect.chance ?? 0)
+  ));
+
+  if (!matchingPerk) return task;
+
+  const pointMultiplier = matchingPerk.effect.multiplier || 2;
+  return {
+    ...task,
+    originalPoints: task.points,
+    points: Math.round(task.points * pointMultiplier),
+    creationPerk: {
+      id: matchingPerk.id,
+      name: matchingPerk.name,
+      label: matchingPerk.effect.label,
+      multiplier: pointMultiplier,
+    },
+  };
+}
 
 export function currentHourStart(now = Date.now()) {
   const d = new Date(now);
@@ -64,8 +98,15 @@ export function createInitialState() {
 }
 
 export function ensureCategories(state) {
-  if (state.categories && state.categories.length) return state;
-  return { ...state, categories: DEFAULT_CATEGORIES.map(c => ({ ...c })) };
+  const categories = state.categories && state.categories.length
+    ? state.categories
+    : DEFAULT_CATEGORIES.map(c => ({ ...c }));
+  const perks = (state.perks || []).map(perk => {
+    const migratedId = LEGACY_PERK_IDS[perk.id] || perk.id;
+    const canonical = PERK_POOL.find(p => p.id === migratedId);
+    return canonical ? { ...canonical, ...perk, id: migratedId } : perk;
+  });
+  return { ...state, categories, perks };
 }
 
 const slugify = (s) =>
@@ -113,7 +154,8 @@ export function rolloverDayIfNeeded(state) {
 }
 
 export function addTask(state, task) {
-  return { ...state, round: { ...state.round, tasks: [...state.round.tasks, task] } };
+  const taskWithPerks = applyCreationPerks(state, task);
+  return { ...state, round: { ...state.round, tasks: [...state.round.tasks, taskWithPerks] } };
 }
 
 export function completeTask(state, taskId) {
@@ -125,10 +167,13 @@ export function completeTask(state, taskId) {
     : 1;
   const timeLeftMs = Math.max(0, state.round.startedAt + state.round.durationMs - Date.now());
   const activePerks = state.perks.filter(p => p.active && p.effect && typeof p.effect === 'object');
-  const baseEarned = task.points;
+  const baseEarned = task.originalPoints || task.points;
+  const creationBonus = task.originalPoints ? task.points - task.originalPoints : 0;
   const urgentBonus = task.urgent ? Math.round(task.points * (URGENT_BONUS - 1)) : 0;
-  const triggeredPerks = [];
-  let perkBonus = 0;
+  const triggeredPerks = task.creationPerk
+    ? [{ ...task.creationPerk, bonus: creationBonus }]
+    : [];
+  let perkBonus = creationBonus;
   let multiplierStep = MULTIPLIER_STEP;
 
   for (const perk of activePerks) {
@@ -188,7 +233,7 @@ export function completeTask(state, taskId) {
   const earned = Math.round(subtotal * state.round.multiplier);
   const multiplierBonus = earned - subtotal;
   const newMult = Math.min(state.round.multiplier + Math.max(0, multiplierStep), MAX_MULTIPLIER);
-  const breakdown = { baseEarned, urgentBonus, perkBonus, multiplierBonus, triggeredPerks };
+  const breakdown = { baseEarned, originalPoints: task.originalPoints || task.points, creationBonus, urgentBonus, perkBonus, multiplierBonus, triggeredPerks };
 
   const round = {
     ...state.round,
@@ -210,7 +255,7 @@ export function buildSummary(state) {
   const { round } = state;
   const completed = round.tasks.filter(t => t.done);
   const failed    = round.tasks.filter(t => !t.done);
-  const baseScore = completed.reduce((s, t) => s + t.points, 0);
+  const baseScore = completed.reduce((s, t) => s + (t.originalPoints || t.points), 0);
   const score     = round.score;
   const urgentBonus = completed.reduce((s, t) => s + (t.breakdown?.urgentBonus || 0), 0);
   const perkBonus = completed.reduce((s, t) => s + (t.breakdown?.perkBonus || 0), 0);

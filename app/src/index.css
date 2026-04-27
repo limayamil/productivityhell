@@ -36,9 +36,17 @@ body {
   flex-direction: column;
 }
 
-@media (max-width: 440px) {
-  body { padding: 0; }
-  #root { width: 100%; min-height: 100vh; }
+@media (max-width: 768px) {
+  body {
+    padding: 0;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    box-shadow: none;
+  }
 }
 
 input { color-scheme: dark; font-family: var(--font-ui); }

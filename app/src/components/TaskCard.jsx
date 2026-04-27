@@ -6,6 +6,7 @@ export default function TaskCard({ task, categories, onComplete }) {
   const catColor = catEntry?.color || CAT_COLORS[task.category?.toLowerCase()] || '#8A8A9A';
   const catLabel = catEntry?.label || task.category;
   const displayPoints = task.done && task.earned ? task.earned : task.points;
+  const rolledDouble = task.creationPerk?.multiplier === 2;
 
   return (
     <div
@@ -77,6 +78,21 @@ export default function TaskCard({ task, categories, onComplete }) {
           <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#4A4A5A' }}>
             {task.duration} min
           </span>
+          {rolledDouble && (
+            <span style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 9,
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              padding: '2px 6px',
+              borderRadius: 2,
+              color: '#FFD166',
+              background: '#FFD16618',
+              border: '1px solid #FFD16650',
+            }}>
+              x2 roll
+            </span>
+          )}
         </div>
       </div>
 

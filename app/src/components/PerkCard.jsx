@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RARITY_STYLES } from '../data/constants';
+import PerkIcon from './PerkIcon';
 
 export default function PerkCard({ perk, onClick, selected, large = false }) {
   const r = RARITY_STYLES[perk.rarity] || RARITY_STYLES.common;
@@ -41,8 +42,9 @@ export default function PerkCard({ perk, onClick, selected, large = false }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: large ? 20 : 14, color: r.color,
           fontFamily: "'Space Mono', monospace", fontWeight: 700,
+          boxShadow: `inset 0 0 12px ${r.color}18`,
         }}>
-          {perk.icon}
+          <PerkIcon perk={perk} size={large ? 26 : 18} strokeWidth={large ? 1.7 : 1.9} />
         </div>
         <div style={{
           fontFamily: "'Space Grotesk', sans-serif",
