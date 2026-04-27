@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import Dashboard     from './screens/Dashboard';
 import DayView       from './screens/DayView';
+import WeekView      from './screens/WeekView';
 import PerksLibrary  from './screens/PerksLibrary';
 import TaskModal     from './overlays/TaskModal';
 import RoundSummary  from './overlays/RoundSummary';
@@ -28,11 +29,13 @@ import {
   startDay as startDayAction,
   endDay as endDayAction,
   buildDaySummary,
+  applyPerk,
 } from './state/gameState';
 
 const NAV_ITEMS = [
   { id: 'dashboard', icon: '◉', label: 'Round' },
   { id: 'day',       icon: '▦', label: 'Day'   },
+  { id: 'week',      icon: 'W', label: 'Week'  },
   { id: 'perks',     icon: '◆', label: 'Perks' },
 ];
 
@@ -53,6 +56,66 @@ const GRADIENT_PHASES = {
     heat: 'rgba(143, 92, 255, 0.24)',
   },
 };
+
+function FabIcon({ type, active = false }) {
+  const stroke = active ? '#0B0B10' : 'currentColor';
+
+  if (type === 'power') {
+    return (
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        style={{ width: 18, height: 18, display: 'block' }}
+        fill="none"
+      >
+        <path
+          d="M12 3v8"
+          stroke={stroke}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M7.05 5.9a8 8 0 1 0 9.9 0"
+          stroke={stroke}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (type === 'moon') {
+    return (
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        style={{ width: 18, height: 18, display: 'block' }}
+        fill="none"
+      >
+        <path
+          d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5Z"
+          stroke={stroke}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      style={{ width: 20, height: 20, display: 'block' }}
+      fill="none"
+    >
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function BottomNav({ screen, onNav }) {
   return (
@@ -217,7 +280,15 @@ export default function App() {
   };
 
   const handleStartDay = () => {
-    setState(prev => startDayAction(prev));
+    setOverlay('dayStartPerk');
+  };
+
+  const handleDayStartPerkSelected = (perk) => {
+    setState(prev => {
+      const withPerk = perk ? applyPerk(prev, perk) : prev;
+      return startDayAction(withPerk);
+    });
+    setOverlay(null);
   };
 
   const handleEndDay = () => {
@@ -262,6 +333,14 @@ export default function App() {
             perksCount={state.perks.length}
             dayEndedAt={state.day.endedAt}
             onRoundSelect={(r) => r && r.hourKey && handleOpenSummary(r.hourKey)}
+          />
+        );
+      case 'week':
+        return (
+          <WeekView
+            historyDays={state.history?.days || []}
+            currentDaySummary={daySummary}
+            categories={state.categories}
           />
         );
       case 'perks':
@@ -327,7 +406,7 @@ export default function App() {
               }}
               onClick={handleEndDay}
             >
-              END
+              <FabIcon type="power" />
             </button>
           )}
           {dayPhase === 'active' && (
@@ -357,7 +436,7 @@ export default function App() {
               }}
               onClick={handleToggleRest}
             >
-              Zz
+              <FabIcon type="moon" active={state.round.rest} />
             </button>
           )}
           <button
@@ -382,7 +461,7 @@ export default function App() {
             }}
             onClick={() => setOverlay('taskModal')}
           >
-            +
+            <FabIcon type="plus" />
           </button>
         </>
       )}
@@ -423,6 +502,18 @@ export default function App() {
             summary={daySummary}
             categories={state.categories}
             onClose={() => setOverlay(null)}
+          />
+        </div>
+      )}
+
+      {overlay === 'dayStartPerk' && (
+        <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
+          <PerkSelection
+            mode="dayStart"
+            ownedPerkIds={ownedPerkIds}
+            summary={null}
+            categories={state.categories}
+            onSelect={handleDayStartPerkSelected}
           />
         </div>
       )}

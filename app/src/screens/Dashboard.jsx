@@ -285,9 +285,9 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             alt=""
             aria-hidden="true"
             style={{
-              width: 38,
-              height: 38,
-              flex: '0 0 38px',
+              width: 64,
+              height: 64,
+              flex: '0 0 64px',
               objectFit: 'contain',
               filter: 'drop-shadow(0 0 8px #FF3B3B55) drop-shadow(0 0 5px #3DDCFF33)',
             }}
@@ -307,18 +307,9 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
                 </span>
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <div style={{ marginTop: 4 }}>
               <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1, minWidth: 0 }}>
                 {startLabel(round.startedAt, round.number)}
-              </div>
-              <div style={{
-                fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
-                padding: '4px 10px', borderRadius: 100,
-                background: st.bg, color: st.color, border: `1px solid ${st.border}`,
-                animation: roundStatus === 'hell' ? 'hellpulse 1.2s ease-in-out infinite alternate' : 'none',
-                flex: '0 0 auto',
-              }}>
-                {st.label}
               </div>
             </div>
           </div>

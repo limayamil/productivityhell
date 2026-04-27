@@ -127,11 +127,29 @@ export function createInitialState() {
   return {
     round: emptyRound(1),
     day: { date: todayStr(), dayNumber: 1, rounds: [], startedAt: null, endedAt: null },
+    history: { days: [] },
     perks: [],
     categories: DEFAULT_CATEGORIES.map(c => ({ ...c })),
     meta: { totalDays: 1, lifetimeScore: 0 },
     pendingSummary: null,
   };
+}
+
+function normalizeHistory(history) {
+  const days = Array.isArray(history?.days) ? history.days : [];
+  return { days };
+}
+
+function upsertDayHistory(state, summary) {
+  if (!summary?.date || !summary.startedAt) return state;
+  const history = normalizeHistory(state.history);
+  const nextDays = [
+    ...history.days.filter(day => day.date !== summary.date),
+    { ...summary, savedAt: Date.now() },
+  ]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-14);
+  return { ...state, history: { days: nextDays } };
 }
 
 export function ensureCategories(state) {
@@ -149,7 +167,7 @@ export function ensureCategories(state) {
   const migratedDay = day.startedAt === undefined
     ? { ...day, startedAt: state.round?.startedAt || Date.now(), endedAt: null }
     : day;
-  return { ...state, categories, perks, day: migratedDay };
+  return { ...state, categories, perks, day: migratedDay, history: normalizeHistory(state.history) };
 }
 
 const slugify = (s) =>
@@ -187,11 +205,15 @@ export function rolloverDayIfNeeded(state) {
   state = ensureCategories(state);
   const today = todayStr();
   if (state.day.date === today) return state;
+  const daySummary = state.day.startedAt
+    ? { ...buildDaySummary(state), endedAt: state.day.endedAt || Date.now() }
+    : null;
+  const stateWithHistory = upsertDayHistory(state, daySummary);
   return {
-    ...state,
+    ...stateWithHistory,
     round: emptyRound(1),
-    day: { date: today, dayNumber: state.day.dayNumber + 1, rounds: [], startedAt: null, endedAt: null },
-    meta: { ...state.meta, totalDays: state.meta.totalDays + 1 },
+    day: { date: today, dayNumber: stateWithHistory.day.dayNumber + 1, rounds: [], startedAt: null, endedAt: null },
+    meta: { ...stateWithHistory.meta, totalDays: stateWithHistory.meta.totalDays + 1 },
     pendingSummary: null,
   };
 }
@@ -213,7 +235,7 @@ export function endDay(state, now = Date.now()) {
   // Start a fresh off-the-clock round so HUD keeps working without affecting Day.
   const nowHourStart = currentHourStart(now);
   const nextRound = { ...emptyRound(state.round.number + 1, nowHourStart), offTheClock: true };
-  return {
+  const closedState = {
     ...state,
     round: nextRound,
     day: {
@@ -224,6 +246,7 @@ export function endDay(state, now = Date.now()) {
     meta: { ...state.meta, lifetimeScore: state.meta.lifetimeScore + liveSummary.score },
     pendingSummary: null,
   };
+  return upsertDayHistory(closedState, buildDaySummary(closedState));
 }
 
 export function buildDaySummary(state) {

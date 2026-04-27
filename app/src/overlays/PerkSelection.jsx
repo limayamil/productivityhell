@@ -129,11 +129,14 @@ export default function PerkSelection({
   ownedPerkIds,
   summary,
   categories,
+  mode = 'round',
 }) {
   const [selected, setSelected] = useState(null);
   const [choices] = useState(() => pickThree(ownedPerkIds, summary, categories));
 
   const selPerk = choices.find(p => p.id === selected);
+
+  const isDayStart = mode === 'dayStart';
 
   return (
     <div className="overlayIn" style={{ background: '#0B0B10', minHeight: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -141,16 +144,19 @@ export default function PerkSelection({
 
       <div className="arcadeEnter" style={{ padding: '20px 16px 0', textAlign: 'center' }}>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4A4A5A' }}>
-          Round {String(roundNumber).padStart(2, '0')} Complete - Choose your reward
+          {isDayStart ? 'Inicio del día · Bono de arranque' : `Round ${String(roundNumber).padStart(2, '0')} Complete - Choose your reward`}
         </div>
         <div style={{ fontFamily: "'Bebas Neue'", fontSize: 44, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1, marginTop: 4 }}>
-          Select a Perk
+          {isDayStart ? 'Elige tu perk inicial' : 'Select a Perk'}
         </div>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 12, color: '#8A8A9A', marginTop: 6, lineHeight: 1.4 }}>
-          One perk. One deal. The offer bends toward your last round.
+          {isDayStart
+            ? 'Un perk activo durante todo el día. Elige bien.'
+            : 'One perk. One deal. The offer bends toward your last round.'}
         </div>
       </div>
 
+      {!isDayStart && (
       <div style={{ display: 'flex', justifyContent: 'center', gap: 24, margin: '16px 0 24px', padding: '12px 16px', borderTop: '1px solid #2A2A35', borderBottom: '1px solid #2A2A35' }}>
         {[
           { val: roundScore.toLocaleString(),    label: 'Score',     color: '#FFD166' },
@@ -166,8 +172,9 @@ export default function PerkSelection({
           </div>
         ))}
       </div>
+      )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 16px', flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: isDayStart ? '16px 16px 0' : '0 16px', flex: 1, borderTop: isDayStart ? '1px solid #2A2A35' : 'none', marginTop: isDayStart ? 16 : 0 }}>
         {choices.map((perk, index) => (
           <PerkCard
             key={perk.id}
