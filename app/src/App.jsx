@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import Dashboard     from './screens/Dashboard';
 import DayView       from './screens/DayView';
 import PerksLibrary  from './screens/PerksLibrary';
@@ -6,6 +7,7 @@ import TaskModal     from './overlays/TaskModal';
 import RoundSummary  from './overlays/RoundSummary';
 import PerkSelection from './overlays/PerkSelection';
 import HourTransitionToast from './components/HourTransitionToast';
+import DaySummary from './overlays/DaySummary';
 import useLocalStorage from './hooks/useLocalStorage';
 import {
   STORAGE_KEY,
@@ -23,6 +25,9 @@ import {
   updateCategory as updateCategoryAction,
   deleteCategory as deleteCategoryAction,
   getDailyPerk,
+  startDay as startDayAction,
+  endDay as endDayAction,
+  buildDaySummary,
 } from './state/gameState';
 
 const NAV_ITEMS = [
@@ -169,11 +174,13 @@ export default function App() {
 
   const handleCompleteTask = (taskId) => {
     let result = { earned: 0, breakdown: null };
-    setState(prev => {
-      const { state: next, earned } = completeTaskAction(prev, taskId);
-      const completed = next.round.tasks.find(t => t.id === taskId);
-      result = { earned, breakdown: completed?.breakdown || null };
-      return next;
+    flushSync(() => {
+      setState(prev => {
+        const { state: next, earned } = completeTaskAction(prev, taskId);
+        const completed = next.round.tasks.find(t => t.id === taskId);
+        result = { earned, breakdown: completed?.breakdown || null };
+        return next;
+      });
     });
     return result;
   };
@@ -209,6 +216,18 @@ export default function App() {
     setState(prev => togglePerk(prev, perkId));
   };
 
+  const handleStartDay = () => {
+    setState(prev => startDayAction(prev));
+  };
+
+  const handleEndDay = () => {
+    setState(prev => endDayAction(prev));
+    setOverlay('daySummary');
+  };
+
+  const dayPhase = !state.day.startedAt ? 'pending' : !state.day.endedAt ? 'active' : 'closed';
+  const daySummary = useMemo(() => buildDaySummary(state), [state]);
+
   const categoryHandlers = {
     onAddCategory:    (cat)        => setState(prev => addCategoryAction(prev, cat)),
     onUpdateCategory: (id, patch)  => setState(prev => updateCategoryAction(prev, id, patch)),
@@ -229,7 +248,9 @@ export default function App() {
             dailyPerk={dailyPerk}
             categories={state.categories}
             onCompleteTask={handleCompleteTask}
-            onToggleRest={handleToggleRest}
+            dayPhase={dayPhase}
+            dayNumber={state.meta.totalDays}
+            onStartDay={handleStartDay}
           />
         );
       case 'day':
@@ -239,6 +260,7 @@ export default function App() {
             date={state.day.date}
             dayNumber={state.meta.totalDays}
             perksCount={state.perks.length}
+            dayEndedAt={state.day.endedAt}
             onRoundSelect={(r) => r && r.hourKey && handleOpenSummary(r.hourKey)}
           />
         );
@@ -275,31 +297,94 @@ export default function App() {
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
         {renderScreen()}
       </div>
-      {screen === 'dashboard' && (
-        <button
-          className="arcadePressable fabPulse"
-          style={{
-            position: 'absolute',
-            bottom: 72,
-            right: 20,
-            width: 52,
-            height: 52,
-            borderRadius: 100,
-            background: '#FF3B3B',
-            border: 'none',
-            color: '#fff',
-            fontSize: 24,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '3px 3px 0px #000, 0 0 16px #FF3B3B60',
-            zIndex: 60,
-          }}
-          onClick={() => setOverlay('taskModal')}
-        >
-          +
-        </button>
+      {screen === 'dashboard' && dayPhase !== 'pending' && (
+        <>
+          {dayPhase === 'active' && (
+            <button
+              className="arcadePressable"
+              title="Finalizar día"
+              aria-label="Finalizar día"
+              style={{
+                position: 'absolute',
+                bottom: 77,
+                right: 138,
+                width: 42,
+                height: 42,
+                borderRadius: 100,
+                background: '#13131C',
+                border: '1px solid #FFD16670',
+                color: '#FFD166',
+                fontFamily: "'Bebas Neue'",
+                fontSize: 14,
+                letterSpacing: '0.06em',
+                lineHeight: 1,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '3px 3px 0px #000, 0 0 14px #FFD16630',
+                zIndex: 60,
+              }}
+              onClick={handleEndDay}
+            >
+              END
+            </button>
+          )}
+          {dayPhase === 'active' && (
+            <button
+              className="arcadePressable"
+              title={state.round.rest ? 'Quitar descanso' : 'Marcar hora como descanso'}
+              aria-label={state.round.rest ? 'Quitar descanso' : 'Marcar hora como descanso'}
+              style={{
+                position: 'absolute',
+                bottom: 77,
+                right: 84,
+                width: 42,
+                height: 42,
+                borderRadius: 100,
+                background: state.round.rest ? '#3DDCFF' : '#13131C',
+                border: `1px solid ${state.round.rest ? '#3DDCFF' : '#3DDCFF70'}`,
+                color: state.round.rest ? '#0B0B10' : '#3DDCFF',
+                fontFamily: "'Bebas Neue'",
+                fontSize: 20,
+                lineHeight: 1,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: `3px 3px 0px #000, 0 0 14px ${state.round.rest ? '#3DDCFF70' : '#3DDCFF30'}`,
+                zIndex: 60,
+              }}
+              onClick={handleToggleRest}
+            >
+              Zz
+            </button>
+          )}
+          <button
+            className="arcadePressable fabPulse"
+            style={{
+              position: 'absolute',
+              bottom: 72,
+              right: 20,
+              width: 52,
+              height: 52,
+              borderRadius: 100,
+              background: '#FF3B3B',
+              border: 'none',
+              color: '#fff',
+              fontSize: 24,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '3px 3px 0px #000, 0 0 16px #FF3B3B60',
+              zIndex: 60,
+            }}
+            onClick={() => setOverlay('taskModal')}
+          >
+            +
+          </button>
+        </>
       )}
       <BottomNav screen={screen} onNav={setScreen} />
 
@@ -324,9 +409,20 @@ export default function App() {
           <RoundSummary
             summary={selectedRound}
             mode="archived"
+            canClaimPerk={!state.day.endedAt}
             onClose={handleCloseSummary}
             onPerkSelect={() => setOverlay('perkSelection')}
             onToggleRest={() => selectedRound?.hourKey && handleToggleArchivedRest(selectedRound.hourKey)}
+          />
+        </div>
+      )}
+
+      {overlay === 'daySummary' && (
+        <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
+          <DaySummary
+            summary={daySummary}
+            categories={state.categories}
+            onClose={() => setOverlay(null)}
           />
         </div>
       )}

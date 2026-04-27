@@ -126,7 +126,7 @@ function emptyRound(number, hourStart = currentHourStart()) {
 export function createInitialState() {
   return {
     round: emptyRound(1),
-    day: { date: todayStr(), dayNumber: 1, rounds: [] },
+    day: { date: todayStr(), dayNumber: 1, rounds: [], startedAt: null, endedAt: null },
     perks: [],
     categories: DEFAULT_CATEGORIES.map(c => ({ ...c })),
     meta: { totalDays: 1, lifetimeScore: 0 },
@@ -143,7 +143,13 @@ export function ensureCategories(state) {
     const canonical = PERK_POOL.find(p => p.id === migratedId);
     return canonical ? { ...canonical, ...perk, id: migratedId } : perk;
   });
-  return { ...state, categories, perks };
+  // Migrate legacy state without day lifecycle fields: assume in-progress day so
+  // existing sessions don't get bumped back to a pre-Inicio state.
+  const day = state.day || { date: todayStr(), dayNumber: 1, rounds: [] };
+  const migratedDay = day.startedAt === undefined
+    ? { ...day, startedAt: state.round?.startedAt || Date.now(), endedAt: null }
+    : day;
+  return { ...state, categories, perks, day: migratedDay };
 }
 
 const slugify = (s) =>
@@ -184,9 +190,123 @@ export function rolloverDayIfNeeded(state) {
   return {
     ...state,
     round: emptyRound(1),
-    day: { date: today, dayNumber: state.day.dayNumber + 1, rounds: [] },
+    day: { date: today, dayNumber: state.day.dayNumber + 1, rounds: [], startedAt: null, endedAt: null },
     meta: { ...state.meta, totalDays: state.meta.totalDays + 1 },
     pendingSummary: null,
+  };
+}
+
+export function startDay(state, now = Date.now()) {
+  if (state.day.startedAt) return state;
+  return {
+    ...state,
+    round: emptyRound(1, currentHourStart(now)),
+    day: { ...state.day, startedAt: now, endedAt: null },
+  };
+}
+
+export function endDay(state, now = Date.now()) {
+  if (!state.day.startedAt || state.day.endedAt) return state;
+  // Archive the current round as the last counted round of the day.
+  const liveSummary = buildSummary(state);
+  const liveArchived = archivedFromSummary(liveSummary, { missed: false });
+  // Start a fresh off-the-clock round so HUD keeps working without affecting Day.
+  const nowHourStart = currentHourStart(now);
+  const nextRound = { ...emptyRound(state.round.number + 1, nowHourStart), offTheClock: true };
+  return {
+    ...state,
+    round: nextRound,
+    day: {
+      ...state.day,
+      endedAt: now,
+      rounds: [...state.day.rounds, liveArchived],
+    },
+    meta: { ...state.meta, lifetimeScore: state.meta.lifetimeScore + liveSummary.score },
+    pendingSummary: null,
+  };
+}
+
+export function buildDaySummary(state) {
+  const archivedRounds = state.day.rounds || [];
+  // Include current live round only if day is still active (not closed yet).
+  const liveSummary = state.day.startedAt && !state.day.endedAt ? buildSummary(state) : null;
+
+  const allHours = [
+    ...archivedRounds.map(r => ({
+      hour: r.hourLabel || r.hour,
+      score: r.score || 0,
+      rank: r.rank,
+      status: r.status,
+      rest: !!r.rest,
+      missed: !!r.missed,
+      baseScore: r.baseScore || 0,
+      urgentBonus: r.urgentBonus || 0,
+      perkBonus: r.perkBonus || 0,
+      comboBonus: r.comboBonus || 0,
+      completed: r.completed || [],
+      failed: r.failed || [],
+      peakMultiplier: r.peakMultiplier || INITIAL_MULTIPLIER,
+    })),
+    ...(liveSummary ? [{
+      hour: liveSummary.hourLabel,
+      score: liveSummary.score,
+      rank: liveSummary.rank,
+      status: liveSummary.status,
+      rest: !!liveSummary.rest,
+      missed: false,
+      baseScore: liveSummary.baseScore,
+      urgentBonus: liveSummary.urgentBonus,
+      perkBonus: liveSummary.perkBonus,
+      comboBonus: liveSummary.comboBonus,
+      completed: liveSummary.completed,
+      failed: liveSummary.failed,
+      peakMultiplier: liveSummary.peakMultiplier,
+      live: true,
+    }] : []),
+  ];
+
+  const totalScore   = allHours.reduce((s, h) => s + (h.score || 0), 0);
+  const baseScore    = allHours.reduce((s, h) => s + (h.baseScore || 0), 0);
+  const urgentBonus  = allHours.reduce((s, h) => s + (h.urgentBonus || 0), 0);
+  const perkBonus    = allHours.reduce((s, h) => s + (h.perkBonus || 0), 0);
+  const comboBonus   = allHours.reduce((s, h) => s + (h.comboBonus || 0), 0);
+  const peakMultiplier = allHours.reduce((m, h) => Math.max(m, h.peakMultiplier || 0), INITIAL_MULTIPLIER);
+  const completedTasks = allHours.reduce((s, h) => s + (h.completed?.length || 0), 0);
+  const failedTasks    = allHours.reduce((s, h) => s + (h.rest ? 0 : (h.failed?.length || 0)), 0);
+  const cleared  = allHours.filter(h => h.status === 'cleared').length;
+  const survived = allHours.filter(h => h.status === 'survived').length;
+  const failed   = allHours.filter(h => h.status === 'failed' && !h.rest).length;
+  const rest     = allHours.filter(h => h.rest).length;
+
+  // Aggregate score by category from completed tasks.
+  const byCategory = {};
+  for (const h of allHours) {
+    for (const t of h.completed || []) {
+      const key = t.cat || 'uncategorized';
+      byCategory[key] = (byCategory[key] || 0) + (t.pts || 0);
+    }
+  }
+
+  return {
+    date: state.day.date,
+    dayNumber: state.day.dayNumber,
+    startedAt: state.day.startedAt,
+    endedAt: state.day.endedAt,
+    totalScore,
+    rank: getRank(totalScore),
+    baseScore,
+    urgentBonus,
+    perkBonus,
+    comboBonus,
+    peakMultiplier,
+    completedTasks,
+    failedTasks,
+    cleared,
+    survived,
+    failed,
+    rest,
+    hours: allHours,
+    byCategory,
   };
 }
 
@@ -406,7 +526,7 @@ function archivedFromSummary(summary, { missed = false } = {}) {
     failedCount: summary.failed.length,
     perks: summary.perksUsed,
     mult: `×${summary.peakMultiplier.toFixed(2)}`,
-    perkClaimed: false,
+    perkClaimed: !!summary.rest || false,
     missed,
     rest: !!summary.rest,
   };
@@ -444,9 +564,19 @@ function missedRound(hourStart, number) {
 const HOUR_MS = 60 * 60 * 1000;
 
 export function reconcileClock(state, now = Date.now()) {
+  // Day not started yet: hold the clock — no rounds advance, no missed rounds.
+  if (!state.day.startedAt) return state;
+
   const nowHourStart = currentHourStart(now);
   const nowHourKey = hourKeyFor(nowHourStart);
   if (state.round.hourKey === nowHourKey) return state;
+
+  // Day already closed: rotate the round so the HUD timer keeps working, but
+  // don't archive into Day, don't generate missed rounds, don't update meta.
+  if (state.day.endedAt) {
+    const newRound = { ...emptyRound(state.round.number + 1, nowHourStart), offTheClock: true };
+    return { ...state, round: newRound };
+  }
 
   const liveSummary = buildSummary(state);
   const liveArchived = archivedFromSummary(liveSummary, { missed: false });

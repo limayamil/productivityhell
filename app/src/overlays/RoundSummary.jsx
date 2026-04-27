@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function RoundSummary({ summary, onNext, onPerkSelect, onClose, onToggleRest, mode = 'live' }) {
+export default function RoundSummary({ summary, onNext, onPerkSelect, onClose, onToggleRest, mode = 'live', canClaimPerk = true }) {
   const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
@@ -130,7 +130,7 @@ export default function RoundSummary({ summary, onNext, onPerkSelect, onClose, o
       </div>
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 'auto' }}>
-        {!missed && !rest && !perkClaimed && (
+        {!missed && !rest && !perkClaimed && canClaimPerk && (
           <button
             className="arcadePressable"
             style={{ width: '100%', padding: '12px', background: '#13131C', border: '1px solid #8F5CFF60', borderRadius: 6, color: '#8F5CFF', fontFamily: "'Bebas Neue'", fontSize: 18, letterSpacing: '0.06em', cursor: 'pointer', boxShadow: '2px 2px 0px #000' }}

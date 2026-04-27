@@ -16,7 +16,13 @@ function formatDate(iso) {
   return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-export default function DayView({ rounds = [], date, dayNumber = 1, perksCount = 0, onRoundSelect }) {
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+export default function DayView({ rounds = [], date, dayNumber = 1, perksCount = 0, dayEndedAt = null, onRoundSelect }) {
   const totalScore     = rounds.reduce((sum, r) => sum + (r.score || 0), 0);
   const completedRounds = rounds.filter(r => r.status === 'cleared' || r.status === 'survived').length;
   const failedRounds   = rounds.filter(r => r.status === 'failed' && !r.rest).length;
@@ -29,7 +35,18 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
       <div className="crtOverlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
 
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
-        <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' }}>Today's Run</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' }}>Today's Run</div>
+          {dayEndedAt && (
+            <span style={{
+              fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase',
+              padding: '4px 10px', borderRadius: 100,
+              background: '#3DDCFF12', color: '#3DDCFF', border: '1px solid #3DDCFF50',
+            }}>
+              Cerrado · {formatTime(dayEndedAt)}
+            </span>
+          )}
+        </div>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
           {formatDate(date)} · {rounds.length} {rounds.length === 1 ? 'round' : 'rounds'} · Day {dayNumber}
         </div>
@@ -114,7 +131,7 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
                 )}
               </div>
 
-              {rankCode && (
+              {rankCode && !r.rest && (
                 <div style={{ fontFamily: "'Bebas Neue'", fontSize: 20, color: rankColor, textShadow: `0 0 8px ${rankColor}60`, letterSpacing: '0.04em', flexShrink: 0, width: 36, textAlign: 'center' }}>
                   {rankCode}
                 </div>

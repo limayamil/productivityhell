@@ -1,7 +1,73 @@
-import { PRIORITY_COLORS, CAT_COLORS } from '../data/constants';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { PRIORITY_COLORS, CAT_COLORS, RARITY_STYLES } from '../data/constants';
 import AnimatedGradientText from './AnimatedGradientText';
 
+function BreakdownTooltip({ breakdown, earned, anchor }) {
+  if (!breakdown || !anchor) return null;
+  const { baseEarned, urgentBonus, multiplierBonus, triggeredPerks } = breakdown;
+  const subtotal = earned - (multiplierBonus || 0);
+  const hasPerkLines = triggeredPerks?.some(p => p.bonus > 0);
+  const hasExtras = (urgentBonus || 0) > 0 || hasPerkLines;
+
+  const top = anchor.top - 8;
+  const right = window.innerWidth - anchor.right;
+
+  const row = (label, value, color = '#8A8A9A', bold = false) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'baseline' }}>
+      <span style={{ color: '#4A4A5A', fontSize: 9, fontFamily: "'Space Grotesk', sans-serif", fontWeight: bold ? 700 : 500, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ color, fontSize: 11, fontFamily: "'Space Mono', monospace", fontWeight: bold ? 700 : 400 }}>{value}</span>
+    </div>
+  );
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        top,
+        right,
+        transform: 'translateY(-100%)',
+        background: '#0E0E16',
+        border: '1px solid #2A2A35',
+        borderRadius: 6,
+        padding: '10px 12px',
+        minWidth: 160,
+        boxShadow: '0 4px 20px #00000080, 0 0 0 1px #1A1A25',
+        pointerEvents: 'none',
+        zIndex: 400,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 5,
+        animation: 'tooltipPop 0.15s cubic-bezier(0.22,1,0.36,1) forwards',
+      }}
+    >
+      {row('Base', `+${baseEarned}`, '#F0EDE8')}
+      {(triggeredPerks || []).filter(p => p.bonus > 0).map((p, i) => {
+        const c = RARITY_STYLES[p.rarity]?.color || '#FFD166';
+        return (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'baseline' }}>
+            <span style={{ color: c, fontSize: 9, fontFamily: "'Space Grotesk', sans-serif", fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', maxWidth: 96, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+            <span style={{ color: c, fontSize: 11, fontFamily: "'Space Mono', monospace" }}>+{p.bonus}</span>
+          </div>
+        );
+      })}
+      {(urgentBonus || 0) > 0 && row('Urgent', `+${urgentBonus}`, '#FF3B3B')}
+      {hasExtras && (
+        <div style={{ borderTop: '1px solid #2A2A35', paddingTop: 5, marginTop: 1 }}>
+          {row('Subtotal', `${subtotal}`, '#F0EDE850')}
+        </div>
+      )}
+      {(multiplierBonus || 0) > 0 && row('Mult bonus', `+${multiplierBonus}`, '#8F5CFF')}
+      <div style={{ borderTop: '1px solid #2A2A35', paddingTop: 5, marginTop: 1 }}>
+        {row('Total', `+${earned}`, '#FFD166', true)}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export default function TaskCard({ task, categories, onComplete, index = 0, justCompleted = false, suppressDone = false }) {
+  const [scoreAnchor, setScoreAnchor] = useState(null);
   const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.medium;
   const catEntry = categories?.find(c => c.id === task.category);
   const catColor = catEntry?.color || CAT_COLORS[task.category?.toLowerCase()] || '#8A8A9A';
@@ -124,14 +190,27 @@ export default function TaskCard({ task, categories, onComplete, index = 0, just
         </div>
       </div>
 
-      <div style={{
-        fontFamily: "'Space Mono', monospace",
-        fontSize: 12, fontWeight: 700,
-        color: showAsDone ? '#4A4A5A' : p.color,
-        flexShrink: 0,
-        textShadow: showAsDone ? 'none' : (p.glow || 'none'),
-      }}>
+      <div
+        style={{
+          fontFamily: "'Space Mono', monospace",
+          fontSize: 12, fontWeight: 700,
+          color: showAsDone ? '#4A4A5A' : p.color,
+          flexShrink: 0,
+          textShadow: showAsDone ? 'none' : (p.glow || 'none'),
+          cursor: showAsDone && task.breakdown ? 'help' : 'inherit',
+          position: 'relative',
+        }}
+        onMouseEnter={showAsDone && task.breakdown ? e => setScoreAnchor(e.currentTarget.getBoundingClientRect()) : undefined}
+        onMouseLeave={showAsDone && task.breakdown ? () => setScoreAnchor(null) : undefined}
+      >
         +{displayPoints}
+        {scoreAnchor && (
+          <BreakdownTooltip
+            breakdown={task.breakdown}
+            earned={task.earned}
+            anchor={scoreAnchor}
+          />
+        )}
       </div>
     </div>
   );

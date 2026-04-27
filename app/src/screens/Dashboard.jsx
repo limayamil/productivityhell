@@ -11,6 +11,7 @@ const STATUS_MAP = {
   risky: { label: 'Risky',        color: '#FFD166', bg: '#FFD16615', border: '#FFD16640' },
   rest:  { label: 'Descanso',     color: '#3DDCFF', bg: '#3DDCFF15', border: '#3DDCFF50' },
   hell:  { label: '⚡ Hell Mode', color: '#FF3B3B', bg: '#FF3B3B20', border: '#FF3B3B50' },
+  off:   { label: 'Off Hours',    color: '#3DDCFF', bg: '#3DDCFF12', border: '#3DDCFF40' },
 };
 
 const RARITY_COLORS = {
@@ -33,7 +34,7 @@ function startLabel(startedAt, number) {
 
 const APP_TITLE = 'Productivity Hell';
 
-export default function Dashboard({ round, perks, dailyPerk, categories, onCompleteTask, onToggleRest }) {
+export default function Dashboard({ round, perks, dailyPerk, categories, onCompleteTask, dayPhase = 'active', dayNumber = 1, onStartDay }) {
   const [, setTick] = useState(0);
   const [floaters, setFloaters] = useState([]);
   const [hoveredPerk, setHoveredPerk] = useState(null);
@@ -60,8 +61,10 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
   const secs = String(timeLeft % 60).padStart(2, '0');
   const progress = Math.min(score / TARGET_SCORE, 1);
 
+  const isClosed = dayPhase === 'closed';
   const roundStatus =
-    isRest ? 'rest'
+    isClosed ? 'off'
+    : isRest ? 'rest'
     : score >= TARGET_SCORE ? 'safe'
     : timeLeft < 10 * 60 ? 'hell'
     : score / TARGET_SCORE > 0.5 ? 'safe'
@@ -175,6 +178,70 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
     });
   };
 
+  if (dayPhase === 'pending') {
+    return (
+      <div style={{ background: 'rgba(11,11,16,0.68)', minHeight: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', backdropFilter: 'saturate(1.05)' }}>
+        <style>{`
+          @keyframes titleLetterPulse {
+            0%, 100% { color: #FF3B3B; transform: translateY(0); text-shadow: 0 0 6px #FF3B3B30; }
+            50% { color: #FFD166; transform: translateY(-1px); text-shadow: 0 0 10px #FF3B3B85, 0 0 5px #FFD16655; }
+          }
+          @keyframes startPulse { from{box-shadow: 3px 3px 0px #000, 0 0 18px #FF3B3B40} to{box-shadow: 3px 3px 0px #000, 0 0 32px #FF3B3B80} }
+        `}</style>
+        <div className="crtOverlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
+        <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/favicon.png" alt="" aria-hidden="true" style={{ width: 64, height: 64, flex: '0 0 64px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px #FF3B3B55) drop-shadow(0 0 5px #3DDCFF33)' }} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 13, letterSpacing: '0.14em', color: '#FF3B3B', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                {APP_TITLE.split('').map((char, index) => (
+                  <span key={`${char}-${index}`} style={{ display: 'inline-block', animation: 'titleLetterPulse 2.8s ease-in-out infinite', animationDelay: `${index * 0.045}s` }}>
+                    {char === ' ' ? ' ' : char}
+                  </span>
+                ))}
+              </div>
+              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1, marginTop: 4 }}>
+                Day {String(dayNumber).padStart(2, '0')} · standby
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', gap: 18 }}>
+          <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#4A4A5A', textAlign: 'center' }}>
+            Día sin iniciar
+          </div>
+          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 32, color: '#F0EDE8', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.1 }}>
+            ¿Listo para entrar al<br />Hell?
+          </div>
+          <button
+            className="arcadePressable"
+            onClick={onStartDay}
+            style={{
+              marginTop: 12,
+              padding: '18px 56px',
+              background: '#FF3B3B',
+              border: 'none',
+              borderRadius: 8,
+              color: '#fff',
+              fontFamily: "'Bebas Neue'",
+              fontSize: 32,
+              letterSpacing: '0.1em',
+              cursor: 'pointer',
+              boxShadow: '3px 3px 0px #000, 0 0 18px #FF3B3B40',
+              animation: 'startPulse 1.6s ease-in-out infinite alternate',
+            }}
+          >
+            INICIO
+          </button>
+          <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.1em', maxWidth: 260 }}>
+            La ronda 01 quedará anclada a la hora actual.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ background: 'rgba(11,11,16,0.68)', minHeight: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', backdropFilter: 'saturate(1.05)' }}>
       <style>{`
@@ -257,6 +324,18 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
           </div>
         </div>
       </div>
+
+      {isClosed && (
+        <div style={{ padding: '8px 16px', borderBottom: '1px solid #2A2A35', display: 'flex', justifyContent: 'center' }}>
+          <span style={{
+            fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase',
+            padding: '4px 10px', borderRadius: 100,
+            background: '#3DDCFF12', color: '#3DDCFF', border: '1px solid #3DDCFF50',
+          }}>
+            Día finalizado · off the clock
+          </span>
+        </div>
+      )}
 
       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -342,31 +421,6 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             </span>
           );
         })}
-      </div>
-
-      <div style={{ padding: '0 16px 12px' }}>
-        <button
-          type="button"
-          className="arcadePressable"
-          onClick={onToggleRest}
-          style={{
-            width: '100%',
-            padding: '10px 12px',
-            background: isRest ? '#3DDCFF18' : '#13131C',
-            border: `1px solid ${isRest ? '#3DDCFF70' : '#2A2A35'}`,
-            borderRadius: 6,
-            color: isRest ? '#3DDCFF' : '#8A8A9A',
-            fontFamily: "'Space Grotesk'",
-            fontSize: 10,
-            fontWeight: 800,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            boxShadow: '2px 2px 0px #000',
-          }}
-        >
-          {isRest ? 'Descanso activo' : 'Marcar hora como descanso'}
-        </button>
       </div>
 
       {hoveredPerk && createPortal(
