@@ -11,6 +11,7 @@ const STATUS_MAP = {
 };
 
 const RARITY_COLORS = {
+  daily: '#3DDCFF',
   common: '#8A8A9A', uncommon: '#7CFF6B', rare: '#3DDCFF',
   epic: '#8F5CFF', legendary: '#FFD166', cursed: '#FF3B3B', hellborn: '#FFD166',
 };
@@ -27,7 +28,7 @@ function startLabel(startedAt, number) {
   return `Round ${String(number).padStart(2, '0')} · ${hh}:00–${nh}:00`;
 }
 
-export default function Dashboard({ round, perks, categories, onAddTask, onCompleteTask }) {
+export default function Dashboard({ round, perks, dailyPerk, categories, onAddTask, onCompleteTask }) {
   const [, setTick] = useState(0);
   const [floaters, setFloaters] = useState([]);
   const [hoveredPerk, setHoveredPerk] = useState(null);
@@ -42,7 +43,10 @@ export default function Dashboard({ round, perks, categories, onAddTask, onCompl
   const multiplier = round.multiplier;
   const streak = round.streak;
   const tasks = round.tasks;
-  const activePerks = perks.filter(p => p.active);
+  const activePerks = [
+    ...(dailyPerk ? [{ ...dailyPerk, active: true, daily: true }] : []),
+    ...perks.filter(p => p.active),
+  ];
 
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const secs = String(timeLeft % 60).padStart(2, '0');
@@ -197,7 +201,7 @@ export default function Dashboard({ round, perks, categories, onAddTask, onCompl
               onBlur={() => setHoveredPerk(null)}
               tabIndex={0}
             >
-              <PerkIcon perk={p} size={12} strokeWidth={2.1} /> {p.name.split(' ')[0]}
+              <PerkIcon perk={p} size={12} strokeWidth={2.1} /> {p.daily ? 'Daily' : p.name.split(' ')[0]}
             </span>
           );
         })}

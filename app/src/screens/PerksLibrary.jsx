@@ -8,9 +8,10 @@ function withAffinityLabels(perks, categories) {
   });
 }
 
-export default function PerksLibrary({ perks = [], categories = [], roundNumber = 1, peakMultiplier = 1.5, onTogglePerk }) {
+export default function PerksLibrary({ perks = [], dailyPerk, categories = [], roundNumber = 1, peakMultiplier = 1.5, onTogglePerk }) {
   const active   = perks.filter(p => p.active);
   const inactive = perks.filter(p => !p.active);
+  const todayPerk = dailyPerk ? { ...dailyPerk, daily: true, recommendation: 'Daily pact - always active today' } : null;
 
   return (
     <div style={{ background: '#0B0B10', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -24,7 +25,7 @@ export default function PerksLibrary({ perks = [], categories = [], roundNumber 
       <div style={{ display: 'flex', gap: 0, padding: '10px 16px', borderBottom: '1px solid #2A2A35' }}>
         {[
           { val: perks.length,                       label: 'Owned',  color: '#8F5CFF' },
-          { val: active.length,                      label: 'Active', color: '#7CFF6B' },
+          { val: active.length + (todayPerk ? 1 : 0), label: 'Active', color: '#7CFF6B' },
           { val: `×${peakMultiplier.toFixed(2)}`,    label: 'Mult',   color: '#FFD166' },
         ].map((s, i) => (
           <div key={s.label} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
@@ -36,6 +37,17 @@ export default function PerksLibrary({ perks = [], categories = [], roundNumber 
           </div>
         ))}
       </div>
+
+      {todayPerk && (
+        <>
+          <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#3DDCFF', padding: '12px 16px 8px' }}>
+            Today's Pact
+          </div>
+          <div style={{ padding: '0 16px' }}>
+            <PerkCard perk={todayPerk} large={false} />
+          </div>
+        </>
+      )}
 
       {perks.length === 0 ? (
         <div style={{ padding: '32px 16px', textAlign: 'center', color: '#4A4A5A', fontFamily: "'Space Grotesk'", fontSize: 12, fontStyle: 'italic' }}>

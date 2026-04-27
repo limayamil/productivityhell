@@ -20,6 +20,7 @@ import {
   addCategory as addCategoryAction,
   updateCategory as updateCategoryAction,
   deleteCategory as deleteCategoryAction,
+  getDailyPerk,
 } from './state/gameState';
 
 const NAV_ITEMS = [
@@ -124,6 +125,7 @@ export default function App() {
   };
 
   const ownedPerkIds = useMemo(() => new Set(state.perks.map(p => p.id)), [state.perks]);
+  const dailyPerk = getDailyPerk();
 
   const renderScreen = () => {
     switch (screen) {
@@ -132,6 +134,7 @@ export default function App() {
           <Dashboard
             round={state.round}
             perks={state.perks}
+            dailyPerk={dailyPerk}
             categories={state.categories}
             onAddTask={() => setOverlay('taskModal')}
             onCompleteTask={handleCompleteTask}
@@ -151,6 +154,7 @@ export default function App() {
         return (
           <PerksLibrary
             perks={state.perks}
+            dailyPerk={dailyPerk}
             categories={state.categories}
             roundNumber={state.round.number}
             peakMultiplier={state.round.peakMultiplier}

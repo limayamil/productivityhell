@@ -22,7 +22,7 @@ export default function TaskModal({
   const [cat,      setCat]      = useState(cats[0]?.id || 'dev');
   const [priority, setPriority] = useState('medium');
   const [duration, setDuration] = useState(defaultDuration);
-  const [urgent,   setUrgent]   = useState(false);
+  const [urgent,   setUrgent]   = useState(true);
 
   const [manageOpen, setManageOpen] = useState(false);
   const [editingId,  setEditingId]  = useState(null);

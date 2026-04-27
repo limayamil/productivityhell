@@ -23,7 +23,7 @@ export default function PerkCard({ perk, onClick, selected, large = false }) {
         boxShadow: hovered
           ? `3px 3px 0px #000, ${r.glow}`
           : `2px 2px 0px #000, ${glowDimmed}`,
-        cursor: 'pointer',
+        cursor: onClick ? 'pointer' : 'default',
         position: 'relative', overflow: 'hidden',
         transform: hovered ? 'translateY(-3px) scale(1.02)' : selected ? 'scale(0.97)' : 'none',
         transition: 'all 150ms cubic-bezier(0.22,1,0.36,1)',
@@ -52,7 +52,7 @@ export default function PerkCard({ perk, onClick, selected, large = false }) {
           padding: '2px 6px', borderRadius: 2,
           background: r.bg, color: r.color, border: `1px solid ${r.border}40`,
         }}>
-          {perk.rarity}
+          {perk.daily ? 'daily' : perk.rarity}
         </div>
       </div>
 

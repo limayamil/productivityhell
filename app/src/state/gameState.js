@@ -5,13 +5,20 @@ import {
   MAX_MULTIPLIER,
   URGENT_BONUS,
   PERK_POOL,
+  DAILY_PERKS,
   CATEGORIES as DEFAULT_CATEGORIES,
   getRank,
 } from '../data/constants';
 
 export const STORAGE_KEY = 'productivity-hell:v1';
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = (now = new Date()) => {
+  const d = now instanceof Date ? now : new Date(now);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
 const LEGACY_PERK_IDS = {
   1: 'deep-work-demon',
   2: 'patron-sigil',
@@ -23,8 +30,29 @@ const LEGACY_PERK_IDS = {
   8: 'unfinished-altar',
 };
 
+export function getDailyPerk(now = Date.now()) {
+  const d = now instanceof Date ? now : new Date(now);
+  return DAILY_PERKS.find(perk => perk.weekday === d.getDay()) || DAILY_PERKS[0];
+}
+
+function getActivePerks(state, now = Date.now()) {
+  const owned = (state.perks || []).filter(p => p.active && p.effect && typeof p.effect === 'object');
+  const daily = getDailyPerk(now);
+  return daily ? [...owned, { ...daily, active: true, daily: true }] : owned;
+}
+
+function completedHourStreak(rounds = []) {
+  let streak = 0;
+  for (let i = rounds.length - 1; i >= 0; i -= 1) {
+    const round = rounds[i];
+    if (round.missed || (round.completed?.length || round.tasks || 0) === 0) break;
+    streak += 1;
+  }
+  return streak;
+}
+
 function applyCreationPerks(state, task) {
-  const activePerks = (state.perks || []).filter(p => p.active && p.effect?.kind === 'randomCategoryDouble');
+  const activePerks = getActivePerks(state).filter(p => p.effect?.kind === 'randomCategoryDouble');
   const matchingPerk = activePerks.find(perk => (
     perk.boundCategory
     && task.category === perk.boundCategory
@@ -83,6 +111,7 @@ function emptyRound(number, hourStart = currentHourStart()) {
     urgentBonus: 0,
     lastCompletedCategory: null,
     categoryStreak: 0,
+    shortTaskChain: 0,
   };
 }
 
@@ -162,11 +191,14 @@ export function completeTask(state, taskId) {
   const task = state.round.tasks.find(t => t.id === taskId);
   if (!task || task.done) return { state, earned: 0 };
 
+  const now = Date.now();
+  const completedBefore = state.round.tasks.filter(t => t.done).length;
   const sameCategoryStreak = state.round.lastCompletedCategory === task.category
     ? (state.round.categoryStreak || 1) + 1
     : 1;
-  const timeLeftMs = Math.max(0, state.round.startedAt + state.round.durationMs - Date.now());
-  const activePerks = state.perks.filter(p => p.active && p.effect && typeof p.effect === 'object');
+  const timeLeftMs = Math.max(0, state.round.startedAt + state.round.durationMs - now);
+  const elapsedMs = Math.max(0, now - state.round.startedAt);
+  const activePerks = getActivePerks(state, now);
   const baseEarned = task.originalPoints || task.points;
   const creationBonus = task.originalPoints ? task.points - task.originalPoints : 0;
   const urgentBonus = task.urgent ? Math.round(task.points * (URGENT_BONUS - 1)) : 0;
@@ -175,6 +207,7 @@ export function completeTask(state, taskId) {
     : [];
   let perkBonus = creationBonus;
   let multiplierStep = MULTIPLIER_STEP;
+  let shortTaskChain = state.round.shortTaskChain || 0;
 
   for (const perk of activePerks) {
     const effect = perk.effect;
@@ -223,9 +256,45 @@ export function completeTask(state, taskId) {
       triggered = true;
     }
 
+    if (effect.kind === 'hourlyParticipation' && completedBefore === 0) {
+      bonus = effect.amount + (completedHourStreak(state.day?.rounds) * (effect.step || 0));
+      triggered = true;
+    }
+
+    if (effect.kind === 'earlyRoundCompletion' && completedBefore === 0 && elapsedMs <= effect.firstMinutes * 60000) {
+      bonus = effect.amount;
+      triggered = true;
+    }
+
+    if (effect.kind === 'sameRoundCombo' && completedBefore >= effect.minCompletedBefore) {
+      bonus = effect.amount;
+      triggered = true;
+    }
+
+    if (effect.kind === 'urgentBeforeLastMinute' && task.urgent && timeLeftMs > effect.lastMinutes * 60000) {
+      bonus = Math.round(task.points * effect.percent);
+      triggered = true;
+    }
+
+    if (effect.kind === 'shortTaskChain' && task.duration <= effect.maxDuration) {
+      bonus = effect.amount + (shortTaskChain * (effect.step || 0));
+      shortTaskChain += 1;
+      triggered = true;
+    }
+
+    if (effect.kind === 'optionalTaskMultiplier' && !task.urgent) {
+      multiplierStep += effect.step;
+      triggered = true;
+    }
+
+    if (effect.kind === 'firstRoundSoftStart' && state.round.number === 1 && completedBefore === 0) {
+      bonus = effect.amount;
+      triggered = true;
+    }
+
     if (triggered) {
       perkBonus += bonus;
-      triggeredPerks.push({ id: perk.id, name: perk.name, bonus, label: effect.label });
+      triggeredPerks.push({ id: perk.id, name: perk.name, bonus, label: effect.label, daily: !!perk.daily });
     }
   }
 
@@ -247,6 +316,7 @@ export function completeTask(state, taskId) {
     urgentBonus: (state.round.urgentBonus || 0) + urgentBonus,
     lastCompletedCategory: task.category,
     categoryStreak: sameCategoryStreak,
+    shortTaskChain: task.duration <= 20 ? shortTaskChain : 0,
   };
   return { state: { ...state, round }, earned };
 }
