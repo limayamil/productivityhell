@@ -4,6 +4,8 @@ import { RARITY_STYLES } from '../data/constants';
 export default function PerkCard({ perk, onClick, selected, large = false }) {
   const r = RARITY_STYLES[perk.rarity] || RARITY_STYLES.common;
   const [hovered, setHovered] = useState(false);
+  const effectLabel = typeof perk.effect === 'string' ? perk.effect : perk.effect?.label;
+  const description = perk.description || perk.desc;
 
   const glowDimmed = r.glow === 'none'
     ? 'none'
@@ -38,6 +40,7 @@ export default function PerkCard({ perk, onClick, selected, large = false }) {
           background: r.bg, border: `1px solid ${r.border}40`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: large ? 20 : 14, color: r.color,
+          fontFamily: "'Space Mono', monospace", fontWeight: 700,
         }}>
           {perk.icon}
         </div>
@@ -67,7 +70,7 @@ export default function PerkCard({ perk, onClick, selected, large = false }) {
         fontFamily: "'Space Grotesk', sans-serif",
         fontSize: large ? 11 : 9, color: '#8A8A9A', lineHeight: 1.4, flex: 1,
       }}>
-        {perk.desc}
+        {description}
       </div>
 
       <div style={{
@@ -77,16 +80,39 @@ export default function PerkCard({ perk, onClick, selected, large = false }) {
         background: r.bg, color: r.color,
         border: `1px solid ${r.border}30`,
       }}>
-        {perk.effect}
+        {effectLabel}
       </div>
 
-      {perk.category && perk.type && (
+      {(perk.trigger || perk.tags?.length > 0) && (
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {perk.trigger && (
+            <span style={{
+              fontFamily: "'Space Grotesk', sans-serif", fontSize: 8, fontWeight: 800, textTransform: 'uppercase',
+              letterSpacing: '0.08em', color: r.color, background: r.bg, border: `1px solid ${r.border}30`,
+              borderRadius: 2, padding: '2px 6px',
+            }}>
+              {perk.trigger}
+            </span>
+          )}
+          {(perk.tags || []).slice(0, large ? 3 : 2).map(tag => (
+            <span key={tag} style={{
+              fontFamily: "'Space Grotesk', sans-serif", fontSize: 8, fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.08em', color: '#4A4A5A', background: '#1C1C2A', border: '1px solid #2A2A35',
+              borderRadius: 2, padding: '2px 6px',
+            }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {perk.recommendation && (
         <div style={{
           fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: 8, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.08em', color: '#4A4A5A',
+          fontSize: 9, fontWeight: 700, color: '#FFD166',
+          lineHeight: 1.3,
         }}>
-          {perk.category} · {perk.type}
+          {perk.recommendation}
         </div>
       )}
     </div>

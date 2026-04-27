@@ -1,10 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Dashboard     from './screens/Dashboard';
 import DayView       from './screens/DayView';
 import PerksLibrary  from './screens/PerksLibrary';
 import TaskModal     from './overlays/TaskModal';
 import RoundSummary  from './overlays/RoundSummary';
 import PerkSelection from './overlays/PerkSelection';
+import HourTransitionToast from './components/HourTransitionToast';
+import useLocalStorage from './hooks/useLocalStorage';
+import {
+  STORAGE_KEY,
+  createInitialState,
+  rolloverDayIfNeeded,
+  reconcileClock,
+  dismissPendingSummary,
+  addTask as addTaskAction,
+  completeTask as completeTaskAction,
+  claimPerkForRound,
+  togglePerk,
+  addCategory as addCategoryAction,
+  updateCategory as updateCategoryAction,
+  deleteCategory as deleteCategoryAction,
+} from './state/gameState';
 
 const NAV_ITEMS = [
   { id: 'dashboard', icon: '◉', label: 'Round' },
@@ -39,22 +55,109 @@ function BottomNav({ screen, onNav }) {
   );
 }
 
+function remainingMinFor(round) {
+  const ms = Math.max(0, round.startedAt + round.durationMs - Date.now());
+  return Math.max(1, Math.floor(ms / 60000));
+}
+
 export default function App() {
+  const [state, setState] = useLocalStorage(STORAGE_KEY, createInitialState);
   const [screen,  setScreen]  = useState('dashboard');
   const [overlay, setOverlay] = useState(null);
-  const [tasks,   setTasks]   = useState(null);
+  const [selectedHourKey, setSelectedHourKey] = useState(null);
+
+  useEffect(() => {
+    setState(prev => reconcileClock(rolloverDayIfNeeded(prev)));
+    const t = setInterval(() => {
+      setState(prev => reconcileClock(rolloverDayIfNeeded(prev)));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [setState]);
+
+  const selectedRound = useMemo(
+    () => state.day.rounds.find(r => r.hourKey === selectedHourKey) || null,
+    [state.day.rounds, selectedHourKey]
+  );
 
   const handleAddTask = (task) => {
-    if (task && tasks) setTasks(t => [...t, task]);
+    if (task) setState(prev => addTaskAction(prev, task));
     setOverlay(null);
   };
 
+  const handleCompleteTask = (taskId) => {
+    let earnedOut = 0;
+    setState(prev => {
+      const { state: next, earned } = completeTaskAction(prev, taskId);
+      earnedOut = earned;
+      return next;
+    });
+    return earnedOut;
+  };
+
+  const handleOpenSummary = (hourKey) => {
+    setSelectedHourKey(hourKey);
+    setOverlay('roundSummary');
+    setState(prev => dismissPendingSummary(prev));
+  };
+
+  const handleCloseSummary = () => {
+    setOverlay(null);
+    setSelectedHourKey(null);
+  };
+
+  const handlePerkSelected = (perk) => {
+    if (selectedHourKey) {
+      setState(prev => claimPerkForRound(prev, selectedHourKey, perk));
+    }
+    setOverlay(null);
+    setSelectedHourKey(null);
+  };
+
+  const handleTogglePerk = (perkId) => {
+    setState(prev => togglePerk(prev, perkId));
+  };
+
+  const categoryHandlers = {
+    onAddCategory:    (cat)        => setState(prev => addCategoryAction(prev, cat)),
+    onUpdateCategory: (id, patch)  => setState(prev => updateCategoryAction(prev, id, patch)),
+    onDeleteCategory: (id)         => setState(prev => deleteCategoryAction(prev, id)),
+  };
+
+  const ownedPerkIds = useMemo(() => new Set(state.perks.map(p => p.id)), [state.perks]);
+
   const renderScreen = () => {
     switch (screen) {
-      case 'dashboard': return <Dashboard onAddTask={() => setOverlay('taskModal')} onEndRound={() => setOverlay('roundSummary')} tasks={tasks} />;
-      case 'day':       return <DayView onRoundSelect={() => setScreen('dashboard')} />;
-      case 'perks':     return <PerksLibrary />;
-      default:          return null;
+      case 'dashboard':
+        return (
+          <Dashboard
+            round={state.round}
+            perks={state.perks}
+            categories={state.categories}
+            onAddTask={() => setOverlay('taskModal')}
+            onCompleteTask={handleCompleteTask}
+          />
+        );
+      case 'day':
+        return (
+          <DayView
+            rounds={state.day.rounds}
+            date={state.day.date}
+            dayNumber={state.meta.totalDays}
+            perksCount={state.perks.length}
+            onRoundSelect={(r) => r && r.hourKey && handleOpenSummary(r.hourKey)}
+          />
+        );
+      case 'perks':
+        return (
+          <PerksLibrary
+            perks={state.perks}
+            categories={state.categories}
+            roundNumber={state.round.number}
+            peakMultiplier={state.round.peakMultiplier}
+            onTogglePerk={handleTogglePerk}
+          />
+        );
+      default: return null;
     }
   };
 
@@ -65,26 +168,44 @@ export default function App() {
       </div>
       <BottomNav screen={screen} onNav={setScreen} />
 
+      <HourTransitionToast
+        pending={state.pendingSummary}
+        onOpen={() => state.pendingSummary && handleOpenSummary(state.pendingSummary.hourKey)}
+        onDismiss={() => setState(prev => dismissPendingSummary(prev))}
+      />
+
       {overlay === 'taskModal' && (
-        <TaskModal onClose={() => setOverlay(null)} onAdd={handleAddTask} />
+        <TaskModal
+          onClose={() => setOverlay(null)}
+          onAdd={handleAddTask}
+          maxDurationMin={remainingMinFor(state.round)}
+          categories={state.categories}
+          {...categoryHandlers}
+        />
       )}
 
-      {overlay === 'roundSummary' && (
+      {overlay === 'roundSummary' && selectedRound && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: '#0B0B10' }}>
           <RoundSummary
-            score={4820}
-            onNext={() => { setOverlay(null); setScreen('dashboard'); }}
+            summary={selectedRound}
+            mode="archived"
+            onClose={handleCloseSummary}
             onPerkSelect={() => setOverlay('perkSelection')}
           />
         </div>
       )}
 
-      {overlay === 'perkSelection' && (
+      {overlay === 'perkSelection' && selectedRound && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: '#0B0B10' }}>
           <PerkSelection
-            onSelect={() => { setOverlay(null); setScreen('dashboard'); }}
-            roundScore={4820}
-            roundRank="A"
+            roundNumber={selectedRound.roundNumber}
+            roundScore={selectedRound.score}
+            roundRank={selectedRound.rank?.rank}
+            peakMultiplier={selectedRound.peakMultiplier}
+            ownedPerkIds={ownedPerkIds}
+            summary={selectedRound}
+            categories={state.categories}
+            onSelect={handlePerkSelected}
           />
         </div>
       )}

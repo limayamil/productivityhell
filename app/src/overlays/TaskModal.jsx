@@ -1,19 +1,66 @@
 import { useState } from 'react';
-import { CATEGORIES, PRIORITIES, DURATIONS } from '../data/constants';
+import { CATEGORIES as DEFAULT_CATS, PRIORITIES, DURATIONS } from '../data/constants';
 
-export default function TaskModal({ onClose, onAdd }) {
+const COLOR_PALETTE = ['#FF3B3B', '#FF8C42', '#FFD166', '#7CFF6B', '#3DDCFF', '#8F5CFF', '#FF5CD6', '#8A8A9A'];
+
+export default function TaskModal({
+  onClose,
+  onAdd,
+  maxDurationMin = 60,
+  categories,
+  onAddCategory,
+  onUpdateCategory,
+  onDeleteCategory,
+}) {
+  const cats = categories && categories.length ? categories : DEFAULT_CATS;
+  const cap = Math.max(1, Math.floor(maxDurationMin));
+  const allowed = DURATIONS.filter(d => d <= cap);
+  const optionList = allowed.length > 0 ? allowed : [cap];
+  const defaultDuration = optionList[optionList.length - 1];
+
   const [title,    setTitle]    = useState('');
-  const [cat,      setCat]      = useState('dev');
+  const [cat,      setCat]      = useState(cats[0]?.id || 'dev');
   const [priority, setPriority] = useState('medium');
-  const [duration, setDuration] = useState(30);
+  const [duration, setDuration] = useState(defaultDuration);
   const [urgent,   setUrgent]   = useState(false);
+
+  const [manageOpen, setManageOpen] = useState(false);
+  const [editingId,  setEditingId]  = useState(null);
+  const [draftLabel, setDraftLabel] = useState('');
+  const [draftColor, setDraftColor] = useState(COLOR_PALETTE[0]);
+  const [newLabel,   setNewLabel]   = useState('');
+  const [newColor,   setNewColor]   = useState(COLOR_PALETTE[4]);
+
+  const startEdit = (c) => { setEditingId(c.id); setDraftLabel(c.label); setDraftColor(c.color); };
+  const cancelEdit = () => { setEditingId(null); setDraftLabel(''); };
+  const saveEdit = () => {
+    if (!editingId) return;
+    onUpdateCategory && onUpdateCategory(editingId, { label: draftLabel, color: draftColor });
+    cancelEdit();
+  };
+  const handleDelete = (id) => {
+    if (cats.length <= 1) return;
+    onDeleteCategory && onDeleteCategory(id);
+    if (cat === id) {
+      const fallback = cats.find(c => c.id !== id);
+      if (fallback) setCat(fallback.id);
+    }
+    if (editingId === id) cancelEdit();
+  };
+  const handleCreate = () => {
+    const trimmed = newLabel.trim();
+    if (!trimmed) return;
+    onAddCategory && onAddCategory({ label: trimmed, color: newColor });
+    setNewLabel('');
+    setNewColor(COLOR_PALETTE[4]);
+  };
 
   const selPriority = PRIORITIES.find(p => p.id === priority);
   const basePoints  = selPriority.pts + Math.floor(duration * 2.5);
 
   const handleAdd = () => {
     if (!title.trim()) return;
-    onAdd && onAdd({ title: title.trim(), category: cat, priority, duration, points: basePoints, done: false, id: Date.now() });
+    onAdd && onAdd({ title: title.trim(), category: cat, priority, duration, points: basePoints, urgent, done: false, id: Date.now() });
     onClose();
   };
 
@@ -64,14 +111,91 @@ export default function TaskModal({ onClose, onAdd }) {
             autoFocus
           />
 
-          <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
-            Category
-          </label>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {CATEGORIES.map(c => (
-              <div key={c.id} style={chip(cat === c.id, c.color)} onClick={() => setCat(c.id)}>{c.label}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A' }}>
+              Category
+            </label>
+            <button
+              type="button"
+              onClick={() => { setManageOpen(o => !o); cancelEdit(); }}
+              style={{ background: 'transparent', border: '1px solid #2A2A35', color: manageOpen ? '#FF3B3B' : '#8A8A9A', fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 8px', borderRadius: 4, cursor: 'pointer' }}
+            >
+              {manageOpen ? 'Done' : 'Manage'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: manageOpen ? 10 : 16 }}>
+            {cats.map(c => (
+              <div key={c.id} style={chip(cat === c.id, c.color)} onClick={() => !manageOpen && setCat(c.id)}>
+                {c.label}
+                {manageOpen && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); startEdit(c); }}
+                    style={{ marginLeft: 6, color: '#8A8A9A', cursor: 'pointer' }}
+                  >
+                    ✎
+                  </span>
+                )}
+              </div>
             ))}
           </div>
+
+          {manageOpen && (
+            <div style={{ background: '#0F0F18', border: '1px solid #2A2A35', borderRadius: 6, padding: 10, marginBottom: 16 }}>
+              {editingId ? (
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6 }}>Edit category</div>
+                  <input
+                    value={draftLabel}
+                    onChange={e => setDraftLabel(e.target.value)}
+                    style={{ width: '100%', background: '#1C1C2A', border: '1px solid #2A2A35', borderRadius: 4, padding: '8px 10px', fontFamily: "'Space Grotesk'", fontSize: 12, color: '#F0EDE8', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
+                  />
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                    {COLOR_PALETTE.map(col => (
+                      <div
+                        key={col}
+                        onClick={() => setDraftColor(col)}
+                        style={{ width: 22, height: 22, borderRadius: 4, background: col, border: draftColor === col ? '2px solid #F0EDE8' : '1px solid #2A2A35', cursor: 'pointer' }}
+                      />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button type="button" onClick={saveEdit} style={{ flex: 1, padding: '8px', background: '#3DDCFF20', border: '1px solid #3DDCFF60', color: '#3DDCFF', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Save</button>
+                    <button type="button" onClick={cancelEdit} style={{ padding: '8px 10px', background: 'transparent', border: '1px solid #2A2A35', color: '#8A8A9A', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
+                    {cats.length > 1 && (
+                      <button type="button" onClick={() => handleDelete(editingId)} style={{ padding: '8px 10px', background: '#FF3B3B20', border: '1px solid #FF3B3B60', color: '#FF3B3B', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Delete</button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6 }}>New category</div>
+                  <input
+                    value={newLabel}
+                    onChange={e => setNewLabel(e.target.value)}
+                    placeholder="e.g. Research"
+                    style={{ width: '100%', background: '#1C1C2A', border: '1px solid #2A2A35', borderRadius: 4, padding: '8px 10px', fontFamily: "'Space Grotesk'", fontSize: 12, color: '#F0EDE8', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
+                  />
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                    {COLOR_PALETTE.map(col => (
+                      <div
+                        key={col}
+                        onClick={() => setNewColor(col)}
+                        style={{ width: 22, height: 22, borderRadius: 4, background: col, border: newColor === col ? '2px solid #F0EDE8' : '1px solid #2A2A35', cursor: 'pointer' }}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCreate}
+                    disabled={!newLabel.trim()}
+                    style={{ width: '100%', padding: '8px', background: newLabel.trim() ? '#FF3B3B' : '#2A2A35', border: 'none', color: '#fff', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: newLabel.trim() ? 'pointer' : 'not-allowed' }}
+                  >
+                    + Create category
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
             Priority
@@ -86,9 +210,12 @@ export default function TaskModal({ onClose, onAdd }) {
             Estimate
           </label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {DURATIONS.map(d => (
+            {optionList.map(d => (
               <div key={d} style={chip(duration === d, '#3DDCFF')} onClick={() => setDuration(d)}>{d} min</div>
             ))}
+            <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: '#4A4A5A', alignSelf: 'center', marginLeft: 'auto' }}>
+              ≤ {cap} min left
+            </span>
           </div>
 
           <div style={{ height: 1, background: '#2A2A35', margin: '0 0 14px' }} />

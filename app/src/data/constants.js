@@ -1,45 +1,100 @@
-export const SAMPLE_TASKS = [
-  { id: 1, title: 'Fix auth bug in staging env',       category: 'Dev',       priority: 'high',     duration: 45, points: 280, done: false },
-  { id: 2, title: 'Write Q3 campaign brief',           category: 'Marketing', priority: 'medium',   duration: 30, points: 150, done: true  },
-  { id: 3, title: 'Client presentation deck · FINAL',  category: 'Creative',  priority: 'critical', duration: 60, points: 500, done: false },
-  { id: 4, title: 'Reply to team Slack threads',       category: 'Admin',     priority: 'low',      duration: 10, points: 60,  done: true  },
-  { id: 5, title: 'Review pull requests',              category: 'Dev',       priority: 'medium',   duration: 20, points: 120, done: false },
-];
-
-export const SAMPLE_PERKS = [
-  { id: 1, name: 'Deep Work Demon', rarity: 'rare',   icon: '⏱', effect: '×1.5 on 30+ min', active: true  },
-  { id: 2, name: 'Hell Multiplier', rarity: 'epic',   icon: '◆', effect: '+0.25× / streak',  active: true  },
-  { id: 3, name: 'Inbox Exorcist',  rarity: 'common', icon: '⚙', effect: '+50 pts / Admin',  active: false },
-];
-
 export const PERK_POOL = [
-  { id: 1, name: 'Deep Work Demon',  rarity: 'rare',      icon: '⏱', desc: 'Longer tasks yield greater rewards. The deep burns brighter.',           effect: '×1.5 pts on 30+ min tasks',       category: 'All',     type: 'Passive'   },
-  { id: 2, name: 'Inbox Exorcist',   rarity: 'common',    icon: '⚙', desc: 'Complete admin tasks for bonus flat points per sacrifice.',               effect: '+50 pts / Admin task',            category: 'Admin',   type: 'Passive'   },
-  { id: 3, name: 'Critical Combo',   rarity: 'epic',      icon: '◆', desc: '3 high-priority tasks in one hour. Then the score doubles.',              effect: '×2 final score on trigger',       category: 'High',    type: 'Trigger'   },
-  { id: 4, name: 'Hell Multiplier',  rarity: 'legendary', icon: '★', desc: 'Every task completed without breaking your streak adds to the fire.',    effect: '+0.25× per streak task',          category: 'All',     type: 'Stack'     },
-  { id: 5, name: 'Burnout Tax',      rarity: 'cursed',    icon: '✕', desc: 'Triple the points. Half the time. The deal is already made.',             effect: '×3 pts · −15 min round',          category: 'All',     type: 'Risk'      },
-  { id: 6, name: 'Last Minute Pact', rarity: 'hellborn',  icon: '∞', desc: 'Final 10 min tasks are legendary. Fail, and the contract collects.',      effect: '×2 pts · lose 20% on fail',       category: 'All',     type: 'High Risk' },
-  { id: 7, name: 'Category Streak',  rarity: 'uncommon',  icon: '▲', desc: 'Same category, consecutive tasks, stacking fire.',                        effect: '+0.15× per same-cat task',        category: 'Any',     type: 'Stack'     },
-  { id: 8, name: 'Clean Slate',      rarity: 'rare',      icon: '◉', desc: 'Begin fresh. The penalty from last round dissolves.',                     effect: 'Remove 1 active penalty',         category: 'Utility', type: 'Instant'   },
-];
-
-export const DAY_ROUNDS = [
-  { hour: '09:00', score: 2800, rank: 'C', tasks: 4, failed: 1, perks: ['Inbox Exorcist'],                    status: 'survived', mult: '×1.5'  },
-  { hour: '10:00', score: 4820, rank: 'A', tasks: 5, failed: 0, perks: ['Deep Work Demon', 'Hell Multiplier'], status: 'cleared',  mult: '×2.75' },
-  { hour: '11:00', score: 1100, rank: 'D', tasks: 2, failed: 3, perks: [],                                    status: 'failed',   mult: '×1.0'  },
-  { hour: '12:00', score: 6200, rank: 'S', tasks: 6, failed: 0, perks: ['Critical Combo', 'Category Streak'], status: 'cleared',  mult: '×3.5'  },
-  { hour: '13:00', score: 0,    rank: null, tasks: 0, failed: 0, perks: [],                                   status: 'active',   mult: '—'     },
-  { hour: '14:00', score: 0,    rank: null, tasks: 0, failed: 0, perks: [],                                   status: 'upcoming', mult: '—'     },
-  { hour: '15:00', score: 0,    rank: null, tasks: 0, failed: 0, perks: [],                                   status: 'upcoming', mult: '—'     },
-  { hour: '16:00', score: 0,    rank: null, tasks: 0, failed: 0, perks: [],                                   status: 'upcoming', mult: '—'     },
-  { hour: '17:00', score: 0,    rank: null, tasks: 0, failed: 0, perks: [],                                   status: 'upcoming', mult: '—'     },
-];
-
-export const ACTIVE_PERKS_LIBRARY = [
-  { id: 1, name: 'Deep Work Demon', rarity: 'rare',     icon: '⏱', desc: 'Longer tasks yield greater rewards.',              effect: '×1.5 pts on 30+ min tasks', category: 'All',  type: 'Passive', active: true  },
-  { id: 2, name: 'Hell Multiplier', rarity: 'epic',     icon: '◆', desc: 'Every task without a broken streak adds to the fire.', effect: '+0.25× per streak task', category: 'All',  type: 'Stack',   active: true  },
-  { id: 3, name: 'Inbox Exorcist',  rarity: 'common',   icon: '⚙', desc: 'Complete admin tasks for flat bonus points.',       effect: '+50 pts / Admin task',      category: 'Admin', type: 'Passive', active: false },
-  { id: 4, name: 'Category Streak', rarity: 'uncommon', icon: '▲', desc: 'Same category tasks stack a climbing multiplier.', effect: '+0.15× per same-cat task',   category: 'Any',  type: 'Stack',   active: true  },
+  {
+    id: 'deep-work-demon',
+    name: 'Deep Work Demon',
+    rarity: 'rare',
+    icon: 'T',
+    trigger: '30+ min',
+    tags: ['duration', 'focus'],
+    categoryAffinity: 'any',
+    desc: 'Longer sacrifices burn hotter.',
+    description: 'Longer sacrifices burn hotter.',
+    effect: { label: '+35% task base on 30+ min tasks', kind: 'durationPercent', minDuration: 30, percent: 0.35 },
+  },
+  {
+    id: 'patron-sigil',
+    name: 'Patron Sigil',
+    rarity: 'common',
+    icon: '#',
+    trigger: 'category',
+    tags: ['category', 'steady'],
+    categoryAffinity: 'dominant',
+    desc: 'The category you fed most starts feeding you back.',
+    description: 'The category you fed most starts feeding you back.',
+    effect: { label: '+25% task base on favored category', kind: 'categoryPercent', percent: 0.25 },
+  },
+  {
+    id: 'unfinished-altar',
+    name: 'Unfinished Altar',
+    rarity: 'uncommon',
+    icon: '!',
+    trigger: 'failed category',
+    tags: ['category', 'recovery'],
+    categoryAffinity: 'struggling',
+    desc: 'The work you dropped last round becomes easier to redeem.',
+    description: 'The work you dropped last round becomes easier to redeem.',
+    effect: { label: '+90 pts on favored category', kind: 'categoryFlat', amount: 90 },
+  },
+  {
+    id: 'critical-combo',
+    name: 'Critical Combo',
+    rarity: 'epic',
+    icon: '*',
+    trigger: 'high priority',
+    tags: ['priority', 'combo'],
+    categoryAffinity: 'any',
+    desc: 'High-stakes tasks throw sparks into the meter.',
+    description: 'High-stakes tasks throw sparks into the meter.',
+    effect: { label: '+120 pts on High/Critical tasks', kind: 'priorityFlat', priorities: ['high', 'critical'], amount: 120 },
+  },
+  {
+    id: 'hell-multiplier',
+    name: 'Hell Multiplier',
+    rarity: 'legendary',
+    icon: '^',
+    trigger: 'completion',
+    tags: ['multiplier', 'scaling'],
+    categoryAffinity: 'any',
+    desc: 'Every completed task pushes the multiplier a little harder.',
+    description: 'Every completed task pushes the multiplier a little harder.',
+    effect: { label: '+0.15x extra multiplier growth', kind: 'multiplierStep', step: 0.15 },
+  },
+  {
+    id: 'burnout-tax',
+    name: 'Burnout Tax',
+    rarity: 'cursed',
+    icon: 'X',
+    trigger: 'urgent',
+    tags: ['risk', 'urgent'],
+    categoryAffinity: 'any',
+    desc: 'Urgency pays violently, but the meter grows slower afterward.',
+    description: 'Urgency pays violently, but the meter grows slower afterward.',
+    effect: { label: '+60% urgent task base, -0.10x growth', kind: 'urgentRisk', percent: 0.6, multiplierStepPenalty: 0.1 },
+  },
+  {
+    id: 'last-minute-pact',
+    name: 'Last Minute Pact',
+    rarity: 'hellborn',
+    icon: '8',
+    trigger: 'last 10 min',
+    tags: ['risk', 'timer'],
+    categoryAffinity: 'any',
+    desc: 'The final ten minutes turn completed tasks into contracts.',
+    description: 'The final ten minutes turn completed tasks into contracts.',
+    effect: { label: '+75% task base in final 10 min', kind: 'lastMinutePercent', lastMinutes: 10, percent: 0.75 },
+  },
+  {
+    id: 'category-streak',
+    name: 'Category Streak',
+    rarity: 'uncommon',
+    icon: 'A',
+    trigger: 'same category',
+    tags: ['category', 'streak'],
+    categoryAffinity: 'dominant',
+    desc: 'Repeat the same kind of work and the fire stacks.',
+    description: 'Repeat the same kind of work and the fire stacks.',
+    effect: { label: '+10% per same-category streak, max +50%', kind: 'sameCategoryStreak', stepPercent: 0.1, maxPercent: 0.5 },
+  },
 ];
 
 export const CATEGORIES = [
@@ -62,13 +117,13 @@ export const DURATIONS = [10, 20, 30, 45, 60];
 
 export const RANKS = [
   { rank: 'F',   label: 'Doomed',            color: '#4A4A5A', min: 0    },
-  { rank: 'D',   label: 'Barely Alive',       color: '#8A8A9A', min: 500  },
-  { rank: 'C',   label: 'Survived',           color: '#FFD166', min: 1000 },
-  { rank: 'B',   label: 'Productive Sinner',  color: '#FF3B3B', min: 2000 },
-  { rank: 'A',   label: 'Focus Fiend',        color: '#3DDCFF', min: 3000 },
-  { rank: 'S',   label: 'Hellbreaker',        color: '#8F5CFF', min: 4500 },
+  { rank: 'D',   label: 'Barely Alive',      color: '#8A8A9A', min: 500  },
+  { rank: 'C',   label: 'Survived',          color: '#FFD166', min: 1000 },
+  { rank: 'B',   label: 'Productive Sinner', color: '#FF3B3B', min: 2000 },
+  { rank: 'A',   label: 'Focus Fiend',       color: '#3DDCFF', min: 3000 },
+  { rank: 'S',   label: 'Hellbreaker',       color: '#8F5CFF', min: 4500 },
   { rank: 'SS',  label: 'Productivity Demon', color: '#FFD166', min: 6000 },
-  { rank: 'SSS', label: 'God Mode',           color: '#FF3B3B', min: 8000 },
+  { rank: 'SSS', label: 'God Mode',          color: '#FF3B3B', min: 8000 },
 ];
 
 export const RARITY_STYLES = {
@@ -96,6 +151,13 @@ export const CAT_COLORS = {
   creative:  '#8F5CFF',
   personal:  '#7CFF6B',
 };
+
+export const ROUND_DURATION_MS = 60 * 60 * 1000;
+export const TARGET_SCORE = 3000;
+export const INITIAL_MULTIPLIER = 1.5;
+export const MULTIPLIER_STEP = 0.25;
+export const MAX_MULTIPLIER = 5;
+export const URGENT_BONUS = 1.5;
 
 export function getRank(score) {
   let r = RANKS[0];

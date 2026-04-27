@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import TaskCard from '../components/TaskCard';
-import { SAMPLE_TASKS, SAMPLE_PERKS } from '../data/constants';
+import { TARGET_SCORE } from '../data/constants';
 
 const STATUS_MAP = {
   safe:  { label: 'Safe',         color: '#7CFF6B', bg: '#7CFF6B15', border: '#7CFF6B40' },
@@ -13,37 +13,49 @@ const RARITY_COLORS = {
   epic: '#8F5CFF', legendary: '#FFD166', cursed: '#FF3B3B', hellborn: '#FFD166',
 };
 
-const TARGET = 3000;
+function computeTimeLeft(round) {
+  return Math.max(0, round.startedAt + round.durationMs - Date.now());
+}
 
-export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
-  const [tasks, setTasks] = useState(propTasks || SAMPLE_TASKS);
-  const [timeLeft, setTimeLeft] = useState(38 * 60 + 22);
-  const [score, setScore] = useState(1240);
-  const [multiplier, setMultiplier] = useState(1.5);
-  const [streak, setStreak] = useState(3);
+function startLabel(startedAt, number) {
+  const d = new Date(startedAt);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const next = new Date(startedAt + 60 * 60 * 1000);
+  const nh = String(next.getHours()).padStart(2, '0');
+  return `Round ${String(number).padStart(2, '0')} · ${hh}:00–${nh}:00`;
+}
+
+export default function Dashboard({ round, perks, categories, onAddTask, onCompleteTask }) {
+  const [, setTick] = useState(0);
   const [floaters, setFloaters] = useState([]);
 
   useEffect(() => {
-    const t = setInterval(() => setTimeLeft(s => Math.max(0, s - 1)), 1000);
+    const t = setInterval(() => setTick(n => n + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
+  const timeLeft = Math.floor(computeTimeLeft(round) / 1000);
+  const score = round.score;
+  const multiplier = round.multiplier;
+  const streak = round.streak;
+  const tasks = round.tasks;
+  const activePerks = perks.filter(p => p.active);
+
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const secs = String(timeLeft % 60).padStart(2, '0');
-  const progress = Math.min(score / TARGET, 1);
+  const progress = Math.min(score / TARGET_SCORE, 1);
 
-  const roundStatus = score >= TARGET ? 'safe' : timeLeft < 10 * 60 ? 'hell' : score / TARGET > 0.5 ? 'safe' : 'risky';
+  const roundStatus =
+    score >= TARGET_SCORE ? 'safe'
+    : timeLeft < 10 * 60 ? 'hell'
+    : score / TARGET_SCORE > 0.5 ? 'safe'
+    : 'risky';
   const st = STATUS_MAP[roundStatus];
 
-  const completeTask = (id) => {
-    const task = tasks.find(t => t.id === id);
-    if (!task || task.done) return;
-    const earned = Math.round(task.points * multiplier);
-    setTasks(ts => ts.map(t => t.id === id ? { ...t, done: true } : t));
-    setScore(s => s + earned);
-    setStreak(s => s + 1);
-    setMultiplier(m => Math.min(m + 0.25, 5));
-    const fid = Date.now();
+  const handleComplete = (id) => {
+    const earned = onCompleteTask(id);
+    if (!earned) return;
+    const fid = Date.now() + Math.random();
     setFloaters(f => [...f, { id: fid, text: `+${earned}`, x: Math.random() * 60 + 20 }]);
     setTimeout(() => setFloaters(f => f.filter(fl => fl.id !== fid)), 900);
   };
@@ -55,10 +67,8 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
         @keyframes hellpulse { from{box-shadow:0 0 6px #FF3B3B30} to{box-shadow:0 0 14px #FF3B3B80} }
       `}</style>
 
-      {/* CRT overlay */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
 
-      {/* Point floaters */}
       {floaters.map(fl => (
         <div key={fl.id} style={{
           position: 'fixed', top: '30%', left: `${fl.x}%`,
@@ -70,14 +80,13 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
         </div>
       ))}
 
-      {/* Header */}
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
         <div style={{ fontFamily: "'Bebas Neue'", fontSize: 13, letterSpacing: '0.14em', color: '#4A4A5A', textTransform: 'uppercase' }}>
           Productivity Hell
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1 }}>
-            Round 03 · 10:00
+          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1 }}>
+            {startLabel(round.startedAt, round.number)}
           </div>
           <div style={{
             fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
@@ -90,7 +99,6 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
         </div>
       </div>
 
-      {/* Timer + Stats */}
       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{
@@ -101,7 +109,7 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
             {mins}:{secs}
           </div>
           <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A', marginTop: 2 }}>
-            remaining
+            until next hour
           </div>
         </div>
         <div style={{ display: 'flex', gap: 0 }}>
@@ -125,7 +133,6 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
         </div>
       </div>
 
-      {/* Progress bar */}
       <div style={{ padding: '0 16px 12px' }}>
         <div style={{ height: 5, background: '#2A2A35', borderRadius: 2, overflow: 'hidden' }}>
           <div style={{
@@ -136,17 +143,19 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
           }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-          <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: '#4A4A5A' }}>{score.toLocaleString()} / {TARGET.toLocaleString()} pts</span>
+          <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: '#4A4A5A' }}>{score.toLocaleString()} / {TARGET_SCORE.toLocaleString()} pts</span>
           <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: '#4A4A5A' }}>{Math.round(progress * 100)}%</span>
         </div>
       </div>
 
-      {/* Streak + Perks */}
       <div style={{ padding: '0 16px 12px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A' }}>Streak</span>
         <span style={{ fontFamily: "'Space Mono'", fontSize: 13, fontWeight: 700, color: '#3DDCFF' }}>◉ {streak}</span>
         <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A', marginLeft: 'auto' }}>Perks Active</span>
-        {SAMPLE_PERKS.filter(p => p.active).map(p => {
+        {activePerks.length === 0 && (
+          <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#4A4A5A', fontStyle: 'italic' }}>none</span>
+        )}
+        {activePerks.map(p => {
           const c = RARITY_COLORS[p.rarity] || '#8A8A9A';
           return (
             <span key={p.id} style={{
@@ -160,7 +169,6 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
         })}
       </div>
 
-      {/* Task list header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px 8px' }}>
         <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A' }}>
           Active Tasks · {tasks.filter(t => !t.done).length} remaining
@@ -170,25 +178,19 @@ export default function Dashboard({ onAddTask, onEndRound, tasks: propTasks }) {
         </span>
       </div>
 
-      {/* Tasks */}
-      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-        {tasks.map(t => <TaskCard key={t.id} task={t} onComplete={completeTask} />)}
+      <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+        {tasks.length === 0 && (
+          <div style={{
+            border: '1px dashed #2A2A35', borderRadius: 6, padding: '24px 16px',
+            textAlign: 'center', color: '#4A4A5A',
+            fontFamily: "'Space Grotesk'", fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+          }}>
+            No tasks loaded · tap + to start
+          </div>
+        )}
+        {tasks.map(t => <TaskCard key={t.id} task={t} categories={categories} onComplete={handleComplete} />)}
       </div>
 
-      <button
-        style={{
-          margin: '16px', padding: '12px', background: 'transparent',
-          border: '1px solid #2A2A35', borderRadius: 6, color: '#4A4A5A',
-          fontFamily: "'Space Grotesk'", fontSize: 11, fontWeight: 700,
-          textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer',
-          boxShadow: '2px 2px 0px #000',
-        }}
-        onClick={onEndRound}
-      >
-        End Round Early →
-      </button>
-
-      {/* FAB */}
       <button
         style={{
           position: 'fixed', bottom: 80, right: 20,

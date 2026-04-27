@@ -1,8 +1,11 @@
 import { PRIORITY_COLORS, CAT_COLORS } from '../data/constants';
 
-export default function TaskCard({ task, onComplete }) {
+export default function TaskCard({ task, categories, onComplete }) {
   const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.medium;
-  const catColor = CAT_COLORS[task.category?.toLowerCase()] || '#8A8A9A';
+  const catEntry = categories?.find(c => c.id === task.category);
+  const catColor = catEntry?.color || CAT_COLORS[task.category?.toLowerCase()] || '#8A8A9A';
+  const catLabel = catEntry?.label || task.category;
+  const displayPoints = task.done && task.earned ? task.earned : task.points;
 
   return (
     <div
@@ -61,7 +64,7 @@ export default function TaskCard({ task, onComplete }) {
             padding: '2px 6px', borderRadius: 2,
             color: catColor, background: catColor + '15',
           }}>
-            {task.category}
+            {catLabel}
           </span>
           <span style={{
             fontFamily: "'Space Grotesk', sans-serif",
@@ -84,7 +87,7 @@ export default function TaskCard({ task, onComplete }) {
         flexShrink: 0,
         textShadow: task.done ? 'none' : (p.glow || 'none'),
       }}>
-        +{task.points}
+        +{displayPoints}
       </div>
     </div>
   );
