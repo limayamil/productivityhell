@@ -76,10 +76,11 @@ export default function TaskModal({
 
   return (
     <div
+      className="modalShadeIn"
       style={{ position: 'fixed', inset: 0, background: 'rgba(11,11,16,0.85)', zIndex: 300, display: 'flex', alignItems: 'flex-end', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div style={{ background: '#13131C', borderRadius: '8px 8px 0 0', border: '1px solid #2A2A35', borderBottom: 'none', width: '100%', padding: '0 0 32px', boxShadow: '0 -4px 40px rgba(0,0,0,0.6)' }}>
+      <div className="bottomSheetUp" style={{ background: '#13131C', borderRadius: '8px 8px 0 0', border: '1px solid #2A2A35', borderBottom: 'none', width: '100%', padding: '0 0 32px', boxShadow: '0 -4px 40px rgba(0,0,0,0.6)' }}>
         <div style={{ width: 36, height: 4, background: '#2A2A35', borderRadius: 2, margin: '12px auto 0' }} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 16px 0' }}>
@@ -89,6 +90,7 @@ export default function TaskModal({
               +{basePoints} pts base
             </div>
             <button
+              className="arcadePressable"
               style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid #2A2A35', background: 'transparent', color: '#8A8A9A', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={onClose}
             >
@@ -234,6 +236,7 @@ export default function TaskModal({
 
         <div style={{ padding: '20px 16px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
+            className={title.trim() ? 'arcadePressable' : undefined}
             style={{
               width: '100%', padding: '14px', background: '#FF3B3B', border: 'none', borderRadius: 6,
               color: '#fff', fontFamily: "'Bebas Neue'", fontSize: 20, letterSpacing: '0.06em', cursor: 'pointer',

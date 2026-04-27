@@ -136,10 +136,10 @@ export default function PerkSelection({
   const selPerk = choices.find(p => p.id === selected);
 
   return (
-    <div style={{ background: '#0B0B10', minHeight: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
+    <div className="overlayIn" style={{ background: '#0B0B10', minHeight: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="crtOverlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
 
-      <div style={{ padding: '20px 16px 0', textAlign: 'center' }}>
+      <div className="arcadeEnter" style={{ padding: '20px 16px 0', textAlign: 'center' }}>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4A4A5A' }}>
           Round {String(roundNumber).padStart(2, '0')} Complete - Choose your reward
         </div>
@@ -168,19 +168,21 @@ export default function PerkSelection({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 16px', flex: 1 }}>
-        {choices.map(perk => (
+        {choices.map((perk, index) => (
           <PerkCard
             key={perk.id}
             perk={perk}
             large={true}
             selected={selected === perk.id}
             onClick={id => setSelected(prev => prev === id ? null : id)}
+            animationDelay={120 + index * 90}
           />
         ))}
       </div>
 
       <div style={{ padding: '20px 16px 32px' }}>
         <button
+          className={selected ? 'arcadePressable hudPop' : undefined}
           style={{
             width: '100%', padding: '14px',
             background: selected ? '#FFD166' : '#1C1C2A',

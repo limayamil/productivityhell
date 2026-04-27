@@ -12,6 +12,7 @@ export default function HourTransitionToast({ pending, onOpen, onDismiss }) {
 
   return (
     <div
+      className="toastDrop arcadePressable"
       onClick={onOpen}
       style={{
         position: 'fixed', left: '50%', top: 16, transform: 'translateX(-50%)',

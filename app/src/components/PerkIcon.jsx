@@ -1,3 +1,13 @@
+const IMAGE_ICONS = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../assets/perks/*.png', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    })
+  ).map(([path, url]) => [path.split('/').pop().replace('.png', ''), url])
+);
+
 const ICONS = {
   'deep-work-demon': (
     <>
@@ -79,7 +89,28 @@ const ICONS = {
 };
 
 export default function PerkIcon({ perk, size = 24, strokeWidth = 1.8 }) {
+  const imageIcon = IMAGE_ICONS[perk?.id];
   const icon = ICONS[perk?.id];
+
+  if (imageIcon) {
+    return (
+      <img
+        src={imageIcon}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        style={{
+          display: 'block',
+          width: size,
+          height: size,
+          objectFit: 'contain',
+          borderRadius: 6,
+          imageRendering: size <= 32 ? 'pixelated' : 'auto',
+        }}
+      />
+    );
+  }
 
   if (!icon) {
     return (

@@ -71,3 +71,275 @@ button { font-family: var(--font-ui); }
   from { box-shadow: 0 0 8px #3DDCFF15; }
   to   { box-shadow: 0 0 18px #3DDCFF40; }
 }
+
+@keyframes arcadeEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+    filter: saturate(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: saturate(1);
+  }
+}
+
+@keyframes rewardPop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.55) rotate(-6deg);
+  }
+  22% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.18) rotate(3deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-74px) scale(0.92) rotate(0deg);
+  }
+}
+
+@keyframes bonusBeat {
+  0%   { opacity: 0; transform: translate(-50%, -100%) translateY(10px) scale(0.6); }
+  18%  { opacity: 1; transform: translate(-50%, -100%) translateY(-2px) scale(1.14); }
+  55%  { opacity: 1; transform: translate(-50%, -100%) translateY(-22px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -100%) translateY(-58px) scale(0.92); }
+}
+
+@keyframes bonusFinal {
+  0%   { opacity: 0; transform: translate(-50%, -100%) translateY(12px) scale(0.4) rotate(-6deg); }
+  22%  { opacity: 1; transform: translate(-50%, -100%) translateY(-14px) scale(1.32) rotate(3deg); }
+  60%  { opacity: 1; transform: translate(-50%, -100%) translateY(-44px) scale(1.08) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -100%) translateY(-104px) scale(1) rotate(0deg); }
+}
+
+@keyframes hudPop {
+  0% { transform: scale(1); filter: brightness(1); }
+  38% { transform: scale(1.12); filter: brightness(1.45); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes progressSurge {
+  0% { filter: brightness(1); transform: scaleX(1); }
+  45% { filter: brightness(1.7); transform: scaleX(1.015); }
+  100% { filter: brightness(1); transform: scaleX(1); }
+}
+
+@keyframes taskClear {
+  0% { transform: translateX(0) scale(1); filter: brightness(1); }
+  28% { transform: translateX(4px) scale(1.015); filter: brightness(1.45); }
+  100% { transform: translateX(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0.2) rotate(-18deg); opacity: 0; }
+  55% { transform: scale(1.28) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes arcadeSweep {
+  0% { transform: translateX(-125%) skewX(-18deg); opacity: 0; }
+  35% { opacity: 0.85; }
+  100% { transform: translateX(135%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes softShake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-1px); }
+  36% { transform: translateX(1px); }
+  54% { transform: translateX(-1px); }
+  72% { transform: translateX(1px); }
+}
+
+@keyframes bottomSheetUp {
+  from { opacity: 0; transform: translateY(42px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes toastDrop {
+  from { opacity: 0; transform: translate(-50%, -18px) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes navPop {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-3px) scale(1.16); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes crtSweep {
+  from { transform: translateY(-120%); opacity: 0; }
+  20% { opacity: 0.45; }
+  to { transform: translateY(120%); opacity: 0; }
+}
+
+@keyframes rarityRewardDrift {
+  0%, 100% {
+    background-position: 0% 50%;
+    transform: translateY(0);
+  }
+  50% {
+    background-position: 100% 50%;
+    transform: translateY(var(--rarity-drift, -1px));
+  }
+}
+
+@keyframes animatedTextGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes animatedCharWave {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    filter: brightness(1);
+  }
+  38% {
+    transform: translateY(-2px) rotate(-2deg);
+    filter: brightness(1.35);
+  }
+  62% {
+    transform: translateY(1px) rotate(1deg);
+    filter: brightness(1.08);
+  }
+}
+
+.rarityRewardTag {
+  animation: rarityRewardDrift 2.8s ease-in-out infinite;
+}
+
+.rollRewardTag {
+  animation: rarityRewardDrift 2.2s ease-in-out infinite;
+  box-shadow: 0 0 10px #FFD16620;
+  white-space: nowrap;
+}
+
+.animatedGradientText {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.animatedGradientText > span {
+  display: inline-block;
+  background: var(--animated-text-gradient);
+  background-size: 260% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation:
+    animatedTextGradient 2.4s ease-in-out infinite,
+    animatedCharWave 1.7s ease-in-out infinite;
+  animation-delay: 0ms, var(--char-delay, 0ms);
+  will-change: transform, filter, background-position;
+}
+
+.arcadeEnter {
+  animation: arcadeEnter 420ms cubic-bezier(0.22,1,0.36,1) both;
+  animation-delay: var(--arcade-delay, 0ms);
+}
+
+.arcadePressable {
+  transition:
+    transform 140ms cubic-bezier(0.22,1,0.36,1),
+    box-shadow 140ms cubic-bezier(0.22,1,0.36,1),
+    filter 140ms cubic-bezier(0.22,1,0.36,1);
+}
+
+.arcadePressable:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.arcadePressable:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.hudPop {
+  animation: hudPop 430ms cubic-bezier(0.22,1,0.36,1);
+}
+
+.progressSurge {
+  animation: progressSurge 620ms cubic-bezier(0.22,1,0.36,1);
+  transform-origin: left center;
+}
+
+.taskClear {
+  animation: taskClear 520ms cubic-bezier(0.22,1,0.36,1);
+}
+
+.checkPop {
+  animation: checkPop 360ms cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.arcadeSweep::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
+  pointer-events: none;
+  animation: arcadeSweep 1250ms ease-in-out infinite;
+  animation-delay: var(--sweep-delay, 0ms);
+}
+
+.modalShadeIn {
+  animation: overlayFadeIn 180ms ease-out both;
+}
+
+.bottomSheetUp {
+  animation: bottomSheetUp 320ms cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.overlayIn {
+  animation: overlayFadeIn 180ms ease-out both;
+}
+
+.summaryRow {
+  animation: arcadeEnter 360ms cubic-bezier(0.22,1,0.36,1) both;
+  animation-delay: var(--arcade-delay, 0ms);
+}
+
+.toastDrop {
+  animation: toastDrop 340ms cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.activeNavIcon {
+  animation: navPop 360ms cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.fabPulse {
+  animation: hudPop 1.9s ease-in-out infinite;
+}
+
+.hellShake {
+  animation: softShake 560ms ease-in-out infinite;
+}
+
+.crtOverlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, rgba(61,220,255,0.08), transparent);
+  pointer-events: none;
+  animation: crtSweep 5.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

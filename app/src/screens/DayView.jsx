@@ -3,6 +3,7 @@ const STATUS_STYLES = {
   survived: { color: '#FFD166', border: '#FFD16640', bg: '#FFD16608', label: 'Survived' },
   failed:   { color: '#FF3B3B', border: '#FF3B3B40', bg: '#FF3B3B08', label: 'Failed'   },
   missed:   { color: '#4A4A5A', border: '#2A2A35',   bg: '#13131C',   label: 'Missed'   },
+  rest:     { color: '#3DDCFF', border: '#3DDCFF50', bg: '#3DDCFF08', label: 'Descanso' },
   active:   { color: '#3DDCFF', border: '#3DDCFF60', bg: '#3DDCFF10', label: 'Active'   },
   upcoming: { color: '#2A2A35', border: '#2A2A35',   bg: '#13131C',   label: 'Upcoming' },
 };
@@ -18,13 +19,14 @@ function formatDate(iso) {
 export default function DayView({ rounds = [], date, dayNumber = 1, perksCount = 0, onRoundSelect }) {
   const totalScore     = rounds.reduce((sum, r) => sum + (r.score || 0), 0);
   const completedRounds = rounds.filter(r => r.status === 'cleared' || r.status === 'survived').length;
-  const failedRounds   = rounds.filter(r => r.status === 'failed').length;
+  const failedRounds   = rounds.filter(r => r.status === 'failed' && !r.rest).length;
+  const restRounds     = rounds.filter(r => r.rest || r.status === 'rest').length;
 
   return (
-    <div style={{ background: '#0B0B10', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: 'rgba(11,11,16,0.70)', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <style>{`@keyframes activePulse { from{box-shadow:0 0 8px #3DDCFF15} to{box-shadow:0 0 18px #3DDCFF40} }`}</style>
 
-      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
+      <div className="crtOverlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
 
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
         <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' }}>Today's Run</div>
@@ -38,6 +40,7 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
           { val: totalScore.toLocaleString(), label: 'Day Score', color: '#FFD166' },
           { val: completedRounds,             label: 'Cleared',   color: '#7CFF6B' },
           { val: failedRounds,                label: 'Failed',    color: '#FF3B3B' },
+          { val: restRounds,                  label: 'Rest',      color: '#3DDCFF' },
           { val: perksCount,                  label: 'Perks',     color: '#8F5CFF' },
         ].map((s, i) => (
           <div key={s.label} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
@@ -61,7 +64,7 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
           </div>
         )}
         {rounds.map((r, i) => {
-          const styleKey = r.missed ? 'missed' : r.status;
+          const styleKey = r.rest ? 'rest' : r.missed ? 'missed' : r.status;
           const s = STATUS_STYLES[styleKey] || STATUS_STYLES.upcoming;
           const rankCode = typeof r.rank === 'object' ? r.rank?.rank : r.rank;
           const rankColor = RANK_COLORS[rankCode] || '#8A8A9A';
@@ -69,6 +72,7 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
           return (
             <div
               key={i}
+              className="arcadeEnter arcadePressable"
               style={{
                 background: s.bg,
                 border: `1px solid ${s.border}`,
@@ -78,6 +82,7 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
                 boxShadow: '2px 2px 0px #000',
                 display: 'flex', alignItems: 'center', gap: 12,
                 transition: 'transform 120ms cubic-bezier(0.22,1,0.36,1)',
+                '--arcade-delay': `${Math.min(i * 38, 300)}ms`,
               }}
               onClick={() => onRoundSelect && onRoundSelect(r)}
             >

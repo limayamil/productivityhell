@@ -6,6 +6,7 @@ import {
   URGENT_BONUS,
   PERK_POOL,
   DAILY_PERKS,
+  RARITY_REWARD_BONUS,
   CATEGORIES as DEFAULT_CATEGORIES,
   getRank,
 } from '../data/constants';
@@ -41,6 +42,10 @@ function getActivePerks(state, now = Date.now()) {
   return daily ? [...owned, { ...daily, active: true, daily: true }] : owned;
 }
 
+function rarityRewardBonus(perk) {
+  return RARITY_REWARD_BONUS[perk?.rarity] || 0;
+}
+
 function completedHourStreak(rounds = []) {
   let streak = 0;
   for (let i = rounds.length - 1; i >= 0; i -= 1) {
@@ -69,8 +74,10 @@ function applyCreationPerks(state, task) {
     creationPerk: {
       id: matchingPerk.id,
       name: matchingPerk.name,
+      rarity: matchingPerk.rarity,
       label: matchingPerk.effect.label,
       multiplier: pointMultiplier,
+      rewardBonus: rarityRewardBonus(matchingPerk),
     },
   };
 }
@@ -112,6 +119,7 @@ function emptyRound(number, hourStart = currentHourStart()) {
     lastCompletedCategory: null,
     categoryStreak: 0,
     shortTaskChain: 0,
+    rest: false,
   };
 }
 
@@ -184,7 +192,11 @@ export function rolloverDayIfNeeded(state) {
 
 export function addTask(state, task) {
   const taskWithPerks = applyCreationPerks(state, task);
-  return { ...state, round: { ...state.round, tasks: [...state.round.tasks, taskWithPerks] } };
+  return { ...state, round: { ...state.round, rest: false, tasks: [...state.round.tasks, taskWithPerks] } };
+}
+
+export function toggleCurrentRoundRest(state) {
+  return { ...state, round: { ...state.round, rest: !state.round.rest } };
 }
 
 export function completeTask(state, taskId) {
@@ -201,11 +213,13 @@ export function completeTask(state, taskId) {
   const activePerks = getActivePerks(state, now);
   const baseEarned = task.originalPoints || task.points;
   const creationBonus = task.originalPoints ? task.points - task.originalPoints : 0;
+  const creationRarityBonus = Math.round(creationBonus * rarityRewardBonus(task.creationPerk));
+  const creationBonusTotal = creationBonus + creationRarityBonus;
   const urgentBonus = task.urgent ? Math.round(task.points * (URGENT_BONUS - 1)) : 0;
   const triggeredPerks = task.creationPerk
-    ? [{ ...task.creationPerk, bonus: creationBonus }]
+    ? [{ ...task.creationPerk, bonus: creationBonusTotal, baseBonus: creationBonus, rarityBonus: creationRarityBonus }]
     : [];
-  let perkBonus = creationBonus;
+  let perkBonus = creationBonusTotal;
   let multiplierStep = MULTIPLIER_STEP;
   let shortTaskChain = state.round.shortTaskChain || 0;
 
@@ -293,8 +307,19 @@ export function completeTask(state, taskId) {
     }
 
     if (triggered) {
-      perkBonus += bonus;
-      triggeredPerks.push({ id: perk.id, name: perk.name, bonus, label: effect.label, daily: !!perk.daily });
+      const rarityExtra = Math.round(bonus * rarityRewardBonus(perk));
+      const totalBonus = bonus + rarityExtra;
+      perkBonus += totalBonus;
+      triggeredPerks.push({
+        id: perk.id,
+        name: perk.name,
+        rarity: perk.rarity,
+        bonus: totalBonus,
+        baseBonus: bonus,
+        rarityBonus: rarityExtra,
+        label: effect.label,
+        daily: !!perk.daily,
+      });
     }
   }
 
@@ -302,7 +327,7 @@ export function completeTask(state, taskId) {
   const earned = Math.round(subtotal * state.round.multiplier);
   const multiplierBonus = earned - subtotal;
   const newMult = Math.min(state.round.multiplier + Math.max(0, multiplierStep), MAX_MULTIPLIER);
-  const breakdown = { baseEarned, originalPoints: task.originalPoints || task.points, creationBonus, urgentBonus, perkBonus, multiplierBonus, triggeredPerks };
+  const breakdown = { baseEarned, originalPoints: task.originalPoints || task.points, creationBonus, creationRarityBonus, urgentBonus, perkBonus, multiplierBonus, triggeredPerks };
 
   const round = {
     ...state.round,
@@ -323,15 +348,18 @@ export function completeTask(state, taskId) {
 
 export function buildSummary(state) {
   const { round } = state;
+  const rest = !!round.rest;
   const completed = round.tasks.filter(t => t.done);
-  const failed    = round.tasks.filter(t => !t.done);
+  const failed    = rest ? [] : round.tasks.filter(t => !t.done);
   const baseScore = completed.reduce((s, t) => s + (t.originalPoints || t.points), 0);
   const score     = round.score;
   const urgentBonus = completed.reduce((s, t) => s + (t.breakdown?.urgentBonus || 0), 0);
   const perkBonus = completed.reduce((s, t) => s + (t.breakdown?.perkBonus || 0), 0);
   const comboBonus = completed.reduce((s, t) => s + (t.breakdown?.multiplierBonus || 0), 0);
   const rank = getRank(score);
-  const status = failed.length === 0 && completed.length > 0
+  const status = rest
+    ? 'rest'
+    : failed.length === 0 && completed.length > 0
     ? 'cleared'
     : completed.length > 0 ? 'survived' : 'failed';
   const perkNames = new Set();
@@ -351,6 +379,7 @@ export function buildSummary(state) {
     perkBonus,
     comboBonus,
     penalty: 0,
+    rest,
     completed: completed.map(t => ({
       title: t.title,
       pts: t.earned ?? t.points,
@@ -379,6 +408,7 @@ function archivedFromSummary(summary, { missed = false } = {}) {
     mult: `×${summary.peakMultiplier.toFixed(2)}`,
     perkClaimed: false,
     missed,
+    rest: !!summary.rest,
   };
 }
 
@@ -463,6 +493,37 @@ export function claimPerkForRound(state, hourKey, perk) {
     day: {
       ...next.day,
       rounds: next.day.rounds.map(r => r.hourKey === hourKey ? { ...r, perkClaimed: true } : r),
+    },
+  };
+}
+
+export function toggleArchivedRoundRest(state, hourKey) {
+  return {
+    ...state,
+    day: {
+      ...state.day,
+      rounds: state.day.rounds.map(round => {
+        if (round.hourKey !== hourKey) return round;
+        if (round.rest && round.restBackup) {
+          const { restBackup, ...restRound } = round;
+          return { ...restRound, ...restBackup, rest: false };
+        }
+
+        return {
+          ...round,
+          restBackup: {
+            status: round.status,
+            missed: round.missed,
+            failedCount: round.failedCount,
+            perkClaimed: round.perkClaimed,
+          },
+          rest: true,
+          status: 'rest',
+          missed: false,
+          failedCount: 0,
+          perkClaimed: true,
+        };
+      }),
     },
   };
 }

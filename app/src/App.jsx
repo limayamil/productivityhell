@@ -15,6 +15,8 @@ import {
   dismissPendingSummary,
   addTask as addTaskAction,
   completeTask as completeTaskAction,
+  toggleCurrentRoundRest,
+  toggleArchivedRoundRest,
   claimPerkForRound,
   togglePerk,
   addCategory as addCategoryAction,
@@ -29,23 +31,48 @@ const NAV_ITEMS = [
   { id: 'perks',     icon: '◆', label: 'Perks' },
 ];
 
+const GRADIENT_PHASES = {
+  early: {
+    wash: 'rgba(61, 220, 255, 0.30)',
+    accent: 'rgba(143, 92, 255, 0.24)',
+    heat: 'rgba(124, 255, 107, 0.12)',
+  },
+  middle: {
+    wash: 'rgba(255, 209, 102, 0.28)',
+    accent: 'rgba(124, 255, 107, 0.20)',
+    heat: 'rgba(61, 220, 255, 0.14)',
+  },
+  late: {
+    wash: 'rgba(255, 59, 59, 0.34)',
+    accent: 'rgba(255, 209, 102, 0.22)',
+    heat: 'rgba(143, 92, 255, 0.24)',
+  },
+};
+
 function BottomNav({ screen, onNav }) {
   return (
-    <div style={{ position: 'sticky', bottom: 0, background: '#0D0D14', borderTop: '1px solid #2A2A35', display: 'flex', zIndex: 50 }}>
+    <div style={{ position: 'sticky', bottom: 0, background: 'rgba(13,13,20,0.88)', backdropFilter: 'blur(10px)', borderTop: '1px solid #2A2A35', display: 'flex', zIndex: 50 }}>
       {NAV_ITEMS.map(item => {
         const active = screen === item.id;
         return (
           <div
             key={item.id}
+            className="arcadePressable"
             style={{
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               padding: '10px 0 12px', cursor: 'pointer', gap: 3,
               borderTop: active ? '2px solid #FF3B3B' : '2px solid transparent',
-              transition: 'border-color 150ms',
+              transition: 'border-color 150ms, background 150ms, transform 150ms',
+              background: active ? 'linear-gradient(to bottom, #FF3B3B16, transparent)' : 'transparent',
             }}
             onClick={() => onNav(item.id)}
           >
-            <span style={{ fontSize: 16, color: active ? '#FF3B3B' : '#4A4A5A', lineHeight: 1 }}>{item.icon}</span>
+            <span
+              className={active ? 'activeNavIcon' : undefined}
+              style={{ fontSize: 16, color: active ? '#FF3B3B' : '#4A4A5A', lineHeight: 1, textShadow: active ? '0 0 10px #FF3B3B80' : 'none' }}
+            >
+              {item.icon}
+            </span>
             <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: active ? '#F0EDE8' : '#4A4A5A' }}>
               {item.label}
             </span>
@@ -61,11 +88,61 @@ function remainingMinFor(round) {
   return Math.max(1, Math.floor(ms / 60000));
 }
 
+function getRoundPhase(round) {
+  const remaining = Math.max(0, round.startedAt + round.durationMs - Date.now());
+  const remainingRatio = round.durationMs > 0 ? remaining / round.durationMs : 0;
+  if (remainingRatio > 0.55) return 'early';
+  if (remainingRatio > 0.2) return 'middle';
+  return 'late';
+}
+
+function AnimatedGradientBackdrop({ phase }) {
+  const colors = GRADIENT_PHASES[phase] || GRADIENT_PHASES.early;
+
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        overflow: 'hidden',
+        background: '#0B0B10',
+        pointerEvents: 'none',
+      }}
+    >
+      <div style={{
+        position: 'absolute',
+        inset: '-24%',
+        background: `
+          linear-gradient(125deg, ${colors.wash}, transparent 34%, ${colors.accent} 62%, ${colors.heat}),
+          conic-gradient(from 160deg at 50% 48%, ${colors.accent}, ${colors.wash}, ${colors.heat}, ${colors.accent})
+        `,
+        backgroundSize: '170% 170%, 150% 150%',
+        backgroundPosition: '0% 50%, 70% 40%',
+        filter: 'blur(18px) saturate(1.25)',
+        opacity: 0.86,
+        transition: 'background 1800ms ease, opacity 1800ms ease',
+        animation: 'gradientDrift 32s ease-in-out infinite alternate, gradientHue 58s linear infinite',
+      }} />
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: `
+          linear-gradient(to bottom, rgba(11,11,16,0.58), rgba(11,11,16,0.28) 46%, rgba(11,11,16,0.76)),
+          repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 72px)
+        `,
+      }} />
+    </div>
+  );
+}
+
 export default function App() {
   const [state, setState] = useLocalStorage(STORAGE_KEY, createInitialState);
   const [screen,  setScreen]  = useState('dashboard');
   const [overlay, setOverlay] = useState(null);
   const [selectedHourKey, setSelectedHourKey] = useState(null);
+  const [, setBackdropTick] = useState(0);
 
   useEffect(() => {
     setState(prev => reconcileClock(rolloverDayIfNeeded(prev)));
@@ -74,6 +151,11 @@ export default function App() {
     }, 1000);
     return () => clearInterval(t);
   }, [setState]);
+
+  useEffect(() => {
+    const t = setInterval(() => setBackdropTick(n => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const selectedRound = useMemo(
     () => state.day.rounds.find(r => r.hourKey === selectedHourKey) || null,
@@ -86,13 +168,22 @@ export default function App() {
   };
 
   const handleCompleteTask = (taskId) => {
-    let earnedOut = 0;
+    let result = { earned: 0, breakdown: null };
     setState(prev => {
       const { state: next, earned } = completeTaskAction(prev, taskId);
-      earnedOut = earned;
+      const completed = next.round.tasks.find(t => t.id === taskId);
+      result = { earned, breakdown: completed?.breakdown || null };
       return next;
     });
-    return earnedOut;
+    return result;
+  };
+
+  const handleToggleRest = () => {
+    setState(prev => toggleCurrentRoundRest(prev));
+  };
+
+  const handleToggleArchivedRest = (hourKey) => {
+    setState(prev => toggleArchivedRoundRest(prev, hourKey));
   };
 
   const handleOpenSummary = (hourKey) => {
@@ -126,6 +217,7 @@ export default function App() {
 
   const ownedPerkIds = useMemo(() => new Set(state.perks.map(p => p.id)), [state.perks]);
   const dailyPerk = getDailyPerk();
+  const backdropPhase = getRoundPhase(state.round);
 
   const renderScreen = () => {
     switch (screen) {
@@ -136,8 +228,8 @@ export default function App() {
             perks={state.perks}
             dailyPerk={dailyPerk}
             categories={state.categories}
-            onAddTask={() => setOverlay('taskModal')}
             onCompleteTask={handleCompleteTask}
+            onToggleRest={handleToggleRest}
           />
         );
       case 'day':
@@ -166,10 +258,49 @@ export default function App() {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', background: '#0B0B10' }}>
+      <style>{`
+        @keyframes gradientDrift {
+          0% { transform: translate3d(-4%, -2%, 0) rotate(0deg) scale(1); background-position: 0% 50%, 70% 40%; }
+          50% { transform: translate3d(3%, 2%, 0) rotate(4deg) scale(1.04); background-position: 78% 42%, 28% 62%; }
+          100% { transform: translate3d(-2%, 4%, 0) rotate(-3deg) scale(1.02); background-position: 42% 84%, 84% 30%; }
+        }
+
+        @keyframes gradientHue {
+          from { filter: blur(18px) saturate(1.2) hue-rotate(0deg); }
+          to { filter: blur(18px) saturate(1.2) hue-rotate(24deg); }
+        }
+      `}</style>
+      <AnimatedGradientBackdrop phase={backdropPhase} />
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
         {renderScreen()}
       </div>
+      {screen === 'dashboard' && (
+        <button
+          className="arcadePressable fabPulse"
+          style={{
+            position: 'absolute',
+            bottom: 72,
+            right: 20,
+            width: 52,
+            height: 52,
+            borderRadius: 100,
+            background: '#FF3B3B',
+            border: 'none',
+            color: '#fff',
+            fontSize: 24,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '3px 3px 0px #000, 0 0 16px #FF3B3B60',
+            zIndex: 60,
+          }}
+          onClick={() => setOverlay('taskModal')}
+        >
+          +
+        </button>
+      )}
       <BottomNav screen={screen} onNav={setScreen} />
 
       <HourTransitionToast
@@ -189,18 +320,19 @@ export default function App() {
       )}
 
       {overlay === 'roundSummary' && selectedRound && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: '#0B0B10' }}>
+        <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
           <RoundSummary
             summary={selectedRound}
             mode="archived"
             onClose={handleCloseSummary}
             onPerkSelect={() => setOverlay('perkSelection')}
+            onToggleRest={() => selectedRound?.hourKey && handleToggleArchivedRest(selectedRound.hourKey)}
           />
         </div>
       )}
 
       {overlay === 'perkSelection' && selectedRound && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: '#0B0B10' }}>
+        <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
           <PerkSelection
             roundNumber={selectedRound.roundNumber}
             roundScore={selectedRound.score}

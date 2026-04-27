@@ -236,6 +236,17 @@ export const RARITY_STYLES = {
   hellborn:  { color: '#FFD166', border: '#FF3B3B', glow: '0 0 20px #8F5CFF50', bg: '#FF3B3B08', gradient: true },
 };
 
+export const RARITY_REWARD_BONUS = {
+  daily: 0.1,
+  common: 0.05,
+  uncommon: 0.08,
+  rare: 0.12,
+  epic: 0.18,
+  legendary: 0.25,
+  cursed: 0.3,
+  hellborn: 0.4,
+};
+
 export const PRIORITY_COLORS = {
   low:      { color: '#8A8A9A', bg: '#8A8A9A15', border: '#8A8A9A40' },
   medium:   { color: '#FFD166', bg: '#FFD16615', border: '#FFD16640' },

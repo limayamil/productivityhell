@@ -14,7 +14,7 @@ export default function PerksLibrary({ perks = [], dailyPerk, categories = [], r
   const todayPerk = dailyPerk ? { ...dailyPerk, daily: true, recommendation: 'Daily pact - always active today' } : null;
 
   return (
-    <div style={{ background: '#0B0B10', flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: 'rgba(11,11,16,0.70)', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
         <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' }}>Perk Loadout</div>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
@@ -44,7 +44,7 @@ export default function PerksLibrary({ perks = [], dailyPerk, categories = [], r
             Today's Pact
           </div>
           <div style={{ padding: '0 16px' }}>
-            <PerkCard perk={todayPerk} large={false} />
+            <PerkCard perk={todayPerk} large={false} animationDelay={80} />
           </div>
         </>
       )}
@@ -59,8 +59,8 @@ export default function PerksLibrary({ perks = [], dailyPerk, categories = [], r
             Active · {active.length} perks
           </div>
           <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {withAffinityLabels(active, categories).map(p => (
-              <PerkCard key={p.id} perk={p} large={false} onClick={() => onTogglePerk && onTogglePerk(p.id)} />
+            {withAffinityLabels(active, categories).map((p, index) => (
+              <PerkCard key={p.id} perk={p} large={false} onClick={() => onTogglePerk && onTogglePerk(p.id)} animationDelay={120 + index * 55} />
             ))}
           </div>
 
@@ -70,8 +70,8 @@ export default function PerksLibrary({ perks = [], dailyPerk, categories = [], r
                 Inactive
               </div>
               <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {withAffinityLabels(inactive, categories).map(p => (
-                  <PerkCard key={p.id} perk={p} large={false} onClick={() => onTogglePerk && onTogglePerk(p.id)} />
+                {withAffinityLabels(inactive, categories).map((p, index) => (
+                  <PerkCard key={p.id} perk={p} large={false} onClick={() => onTogglePerk && onTogglePerk(p.id)} animationDelay={160 + index * 55} />
                 ))}
               </div>
             </>
