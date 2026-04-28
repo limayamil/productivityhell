@@ -4,7 +4,7 @@ import TaskCard from '../components/TaskCard';
 import PerkIcon from '../components/PerkIcon';
 import PerkCard from '../components/PerkCard';
 import BonusRevealSequence from '../components/BonusRevealSequence';
-import { TARGET_SCORE } from '../data/constants';
+import { RARITY_STYLES, TARGET_SCORE } from '../data/constants';
 
 const STATUS_MAP = {
   safe:  { label: 'Safe',         color: '#7CFF6B', bg: '#7CFF6B15', border: '#7CFF6B40' },
@@ -24,12 +24,28 @@ function computeTimeLeft(round) {
   return Math.max(0, round.startedAt + round.durationMs - Date.now());
 }
 
-function startLabel(startedAt, number) {
+function roundTimeLabel(startedAt, number) {
   const d = new Date(startedAt);
   const hh = String(d.getHours()).padStart(2, '0');
   const next = new Date(startedAt + 60 * 60 * 1000);
   const nh = String(next.getHours()).padStart(2, '0');
   return `Round ${String(number).padStart(2, '0')} · ${hh}:00–${nh}:00`;
+}
+
+function hourRangeLabel(startedAt) {
+  const d = new Date(startedAt);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const next = new Date(startedAt + 60 * 60 * 1000);
+  const nh = String(next.getHours()).padStart(2, '0');
+  return `${hh}:00-${nh}:00`;
+}
+
+function roundNumberFxClass(number) {
+  const capped = Math.min(Number(number) || 1, 10);
+  if (capped >= 8) return 'roundNumberInferno';
+  if (capped >= 6) return 'roundNumberHeat';
+  if (capped >= 4) return 'roundNumberEmber';
+  return undefined;
 }
 
 const APP_TITLE = 'Productivity Hell';
@@ -250,6 +266,10 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
           0%, 100% { color: #FF3B3B; transform: translateY(0); text-shadow: 0 0 6px #FF3B3B30; }
           50% { color: #FFD166; transform: translateY(-1px); text-shadow: 0 0 10px #FF3B3B85, 0 0 5px #FFD16655; }
         }
+        @keyframes activePerkGlowPulse {
+          0%, 100% { opacity: 0.35; transform: scale(0.82); filter: blur(5px); }
+          50% { opacity: 0.95; transform: scale(1.18); filter: blur(8px); }
+        }
       `}</style>
 
       <div className="crtOverlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
@@ -293,7 +313,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             }}
           />
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 13, letterSpacing: '0.14em', color: '#FF3B3B', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 17, letterSpacing: '0.12em', color: '#FF3B3B', textTransform: 'uppercase', whiteSpace: 'nowrap', lineHeight: 1 }}>
               {APP_TITLE.split('').map((char, index) => (
                 <span
                   key={`${char}-${index}`}
@@ -307,26 +327,37 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
                 </span>
               ))}
             </div>
-            <div style={{ marginTop: 4 }}>
-              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1, minWidth: 0 }}>
-                {startLabel(round.startedAt, round.number)}
-              </div>
+            <div style={{ fontFamily: "'Space Mono'", fontSize: 11, color: '#6A6A7A', letterSpacing: '0.03em', lineHeight: 1, marginTop: 6 }}>
+              {hourRangeLabel(round.startedAt)}
             </div>
+          </div>
+          <div
+            aria-label={roundTimeLabel(round.startedAt, round.number)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto', marginLeft: 'auto', whiteSpace: 'nowrap' }}
+          >
+            <span style={{ fontFamily: "'Bebas Neue'", fontSize: 18, color: '#F0EDE8', letterSpacing: '0.08em', lineHeight: 1, textTransform: 'uppercase' }}>
+              Round
+            </span>
+            <span
+              className={isClosed ? undefined : roundNumberFxClass(round.number)}
+              style={{
+                display: 'inline-block',
+                position: 'relative',
+                fontFamily: "'Bebas Neue'",
+                fontSize: 34,
+                color: '#F0EDE8',
+                letterSpacing: '0.02em',
+                lineHeight: 0.88,
+                minWidth: 34,
+                textAlign: 'center',
+                transformOrigin: 'center',
+              }}
+            >
+              {String(round.number).padStart(2, '0')}
+            </span>
           </div>
         </div>
       </div>
-
-      {isClosed && (
-        <div style={{ padding: '8px 16px', borderBottom: '1px solid #2A2A35', display: 'flex', justifyContent: 'center' }}>
-          <span style={{
-            fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase',
-            padding: '4px 10px', borderRadius: 100,
-            background: '#3DDCFF12', color: '#3DDCFF', border: '1px solid #3DDCFF50',
-          }}>
-            Día finalizado · off the clock
-          </span>
-        </div>
-      )}
 
       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -346,7 +377,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             <div key={`score-${feedback?.id || 'idle'}`} className={feedback ? 'hudPop' : undefined} style={{ fontFamily: "'Space Mono'", fontSize: 20, fontWeight: 700, color: '#FFD166', lineHeight: 1, transformOrigin: 'right center' }}>
               {score.toLocaleString()}
             </div>
-            <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A', marginTop: 2 }}>
+            <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#FFD166', marginTop: 2 }}>
               Points
             </div>
           </div>
@@ -355,7 +386,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             <div key={`mult-${feedback?.id || 'idle'}`} className={feedback?.multUp ? 'hudPop' : undefined} style={{ fontFamily: "'Space Mono'", fontSize: 20, fontWeight: 700, color: '#8F5CFF', lineHeight: 1, transformOrigin: 'right center' }}>
               ×{multiplier.toFixed(2)}
             </div>
-            <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A', marginTop: 2 }}>
+            <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8F5CFF', marginTop: 2 }}>
               Mult
             </div>
           </div>
@@ -364,7 +395,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             <div style={{ fontFamily: "'Space Mono'", fontSize: 20, fontWeight: 700, color: '#3DDCFF', lineHeight: 1 }}>
               {streak}
             </div>
-            <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A', marginTop: 2 }}>
+            <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#3DDCFF', marginTop: 2 }}>
               Streak
             </div>
           </div>
@@ -387,19 +418,35 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
       </div>
 
       <div style={{ padding: '0 16px 12px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A' }}>Perks Active</span>
         {activePerks.length === 0 && (
           <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#4A4A5A', fontStyle: 'italic' }}>none</span>
         )}
-        {activePerks.map(p => {
-          const c = RARITY_COLORS[p.rarity] || '#8A8A9A';
+        {activePerks.map((p, index) => {
+          const r = RARITY_STYLES[p.rarity] || RARITY_STYLES.common;
+          const c = r.color || RARITY_COLORS[p.rarity] || '#8A8A9A';
+          const glowBackground = r.gradient
+            ? 'radial-gradient(circle, #FFD16695 0%, #FF3B3B65 34%, #8F5CFF45 58%, transparent 76%)'
+            : `radial-gradient(circle, ${c}95 0%, ${c}42 48%, transparent 74%)`;
           return (
             <span
               key={p.id}
+              aria-label={p.daily ? `Daily: ${p.name}` : p.name}
+              title={p.daily ? `Daily: ${p.name}` : p.name}
               style={{
-              fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-              padding: '3px 8px', borderRadius: 100, background: c + '15', color: c, border: `1px solid ${c}50`,
-              display: 'inline-flex', alignItems: 'center', gap: 4,
+                width: 36,
+                height: 36,
+                position: 'relative',
+                color: c,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '0 0 36px',
+                background: r.gradient
+                  ? 'linear-gradient(135deg, #FF3B3B20, #FFD16614, #8F5CFF22)'
+                  : r.bg,
+                border: `1px solid ${r.border || c}`,
+                borderRadius: 7,
+                boxShadow: `inset 0 0 0 1px ${c}24`,
                 cursor: 'default',
               }}
               onMouseEnter={(event) => showPerkDetails(p, event)}
@@ -408,7 +455,22 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
               onBlur={() => setHoveredPerk(null)}
               tabIndex={0}
             >
-              <PerkIcon perk={p} size={12} strokeWidth={2.1} /> {p.daily ? 'Daily' : p.name.split(' ')[0]}
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: -5,
+                  borderRadius: 10,
+                  background: glowBackground,
+                  animation: 'activePerkGlowPulse 2.4s ease-in-out infinite',
+                  animationDelay: `${index * 150}ms`,
+                  zIndex: 0,
+                  pointerEvents: 'none',
+                }}
+              />
+              <span style={{ position: 'relative', zIndex: 1 }}>
+                <PerkIcon perk={p} size={32} strokeWidth={2.1} />
+              </span>
             </span>
           );
         })}

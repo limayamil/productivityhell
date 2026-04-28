@@ -58,6 +58,53 @@ const GRADIENT_PHASES = {
   },
 };
 
+const BACKDROP_CHAOS = {
+  calm: {
+    opacity: 0.82,
+    blur: 18,
+    saturate: 1.18,
+    drift: '32s',
+    hue: '58s',
+    scale: 1,
+    emberOpacity: 0,
+    streakOpacity: 0,
+    shake: 'none',
+  },
+  ember: {
+    opacity: 0.9,
+    blur: 17,
+    saturate: 1.34,
+    drift: '24s',
+    hue: '44s',
+    scale: 1.03,
+    emberOpacity: 0.26,
+    streakOpacity: 0.14,
+    shake: 'backgroundChaosPulse 7s ease-in-out infinite',
+  },
+  heat: {
+    opacity: 0.96,
+    blur: 15,
+    saturate: 1.55,
+    drift: '16s',
+    hue: '32s',
+    scale: 1.07,
+    emberOpacity: 0.42,
+    streakOpacity: 0.26,
+    shake: 'backgroundChaosPulse 4.8s ease-in-out infinite',
+  },
+  inferno: {
+    opacity: 1,
+    blur: 13,
+    saturate: 1.85,
+    drift: '9s',
+    hue: '22s',
+    scale: 1.12,
+    emberOpacity: 0.62,
+    streakOpacity: 0.42,
+    shake: 'backgroundChaosPulse 2.9s steps(2, end) infinite',
+  },
+};
+
 function FabIcon({ type, active = false }) {
   const stroke = active ? '#0B0B10' : 'currentColor';
 
@@ -165,8 +212,17 @@ function getRoundPhase(round) {
   return 'late';
 }
 
-function AnimatedGradientBackdrop({ phase }) {
+function getBackdropChaosLevel(round) {
+  const capped = Math.min(Number(round?.number) || 1, 10);
+  if (capped >= 8) return 'inferno';
+  if (capped >= 6) return 'heat';
+  if (capped >= 4) return 'ember';
+  return 'calm';
+}
+
+function AnimatedGradientBackdrop({ phase, chaosLevel }) {
   const colors = GRADIENT_PHASES[phase] || GRADIENT_PHASES.early;
+  const chaos = BACKDROP_CHAOS[chaosLevel] || BACKDROP_CHAOS.calm;
 
   return (
     <div
@@ -189,10 +245,41 @@ function AnimatedGradientBackdrop({ phase }) {
         `,
         backgroundSize: '170% 170%, 150% 150%',
         backgroundPosition: '0% 50%, 70% 40%',
-        filter: 'blur(18px) saturate(1.25)',
-        opacity: 0.86,
-        transition: 'background 1800ms ease, opacity 1800ms ease',
-        animation: 'gradientDrift 32s ease-in-out infinite alternate, gradientHue 58s linear infinite',
+        '--backdrop-blur': `${chaos.blur}px`,
+        '--backdrop-saturate': chaos.saturate,
+        filter: `blur(${chaos.blur}px) saturate(${chaos.saturate})`,
+        opacity: chaos.opacity,
+        transform: `scale(${chaos.scale})`,
+        transition: 'background 1800ms ease, opacity 1800ms ease, filter 1200ms ease',
+        animation: `gradientDrift ${chaos.drift} ease-in-out infinite alternate, gradientHue ${chaos.hue} linear infinite`,
+      }} />
+      <div style={{
+        position: 'absolute',
+        inset: '-18%',
+        opacity: chaos.emberOpacity,
+        background: `
+          radial-gradient(circle at 18% 82%, rgba(255, 59, 59, 0.55) 0 3px, transparent 4px 100%),
+          radial-gradient(circle at 72% 22%, rgba(255, 209, 102, 0.48) 0 2px, transparent 3px 100%),
+          radial-gradient(circle at 84% 72%, rgba(255, 122, 26, 0.42) 0 2px, transparent 3px 100%)
+        `,
+        backgroundSize: '58px 74px, 83px 67px, 71px 91px',
+        filter: 'blur(0.6px)',
+        mixBlendMode: 'screen',
+        animation: 'backgroundAsh 12s linear infinite',
+        transition: 'opacity 900ms ease',
+      }} />
+      <div style={{
+        position: 'absolute',
+        inset: '-10%',
+        opacity: chaos.streakOpacity,
+        background: `
+          repeating-linear-gradient(116deg, transparent 0 18px, rgba(255, 59, 59, 0.18) 19px 21px, transparent 22px 54px),
+          radial-gradient(ellipse at 50% 110%, rgba(255, 59, 59, 0.35), transparent 58%)
+        `,
+        filter: 'blur(6px)',
+        mixBlendMode: 'screen',
+        animation: chaos.shake,
+        transition: 'opacity 900ms ease',
       }} />
       <div style={{
         position: 'absolute',
@@ -313,6 +400,7 @@ export default function App() {
   const ownedPerkIds = useMemo(() => new Set(state.perks.map(p => p.id)), [state.perks]);
   const dailyPerk = getDailyPerk();
   const backdropPhase = getRoundPhase(state.round);
+  const backdropChaosLevel = dayPhase === 'closed' ? 'calm' : getBackdropChaosLevel(state.round);
 
   const renderScreen = () => {
     switch (screen) {
@@ -374,11 +462,24 @@ export default function App() {
         }
 
         @keyframes gradientHue {
-          from { filter: blur(18px) saturate(1.2) hue-rotate(0deg); }
-          to { filter: blur(18px) saturate(1.2) hue-rotate(24deg); }
+          from { filter: blur(var(--backdrop-blur, 18px)) saturate(var(--backdrop-saturate, 1.2)) hue-rotate(0deg); }
+          to { filter: blur(var(--backdrop-blur, 18px)) saturate(var(--backdrop-saturate, 1.2)) hue-rotate(24deg); }
+        }
+
+        @keyframes backgroundChaosPulse {
+          0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 0.9; }
+          18% { transform: translate3d(-1.5%, 0.5%, 0) rotate(-1deg) scale(1.03); opacity: 1; }
+          39% { transform: translate3d(1%, -1%, 0) rotate(1.2deg) scale(1.05); opacity: 0.82; }
+          64% { transform: translate3d(-0.5%, 1.2%, 0) rotate(-0.7deg) scale(1.02); opacity: 1; }
+          81% { transform: translate3d(1.4%, 0, 0) rotate(0.5deg) scale(1.04); opacity: 0.88; }
+        }
+
+        @keyframes backgroundAsh {
+          from { transform: translate3d(-2%, 8%, 0) rotate(0deg); background-position: 0 0, 30px 20px, 12px 44px; }
+          to { transform: translate3d(3%, -8%, 0) rotate(5deg); background-position: 90px -160px, -80px -130px, 110px -190px; }
         }
       `}</style>
-      <AnimatedGradientBackdrop phase={backdropPhase} />
+      <AnimatedGradientBackdrop phase={backdropPhase} chaosLevel={backdropChaosLevel} />
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
         {renderScreen()}
       </div>
@@ -470,6 +571,43 @@ export default function App() {
             <FabIcon type="plus" />
           </button>
         </>
+      )}
+      {dayPhase === 'closed' && (
+        <div
+          aria-label="Dia finalizado, off the clock"
+          style={{
+            position: 'absolute',
+            left: '50%',
+            bottom: 88,
+            transform: 'translateX(-50%) rotate(-4deg)',
+            zIndex: 55,
+            pointerEvents: 'none',
+            minWidth: 168,
+            padding: '9px 16px 8px',
+            border: '3px solid #3DDCFF',
+            borderRadius: 4,
+            background: `
+              linear-gradient(135deg, #3DDCFF14, #0B0B1000 58%),
+              repeating-linear-gradient(-18deg, #3DDCFF00 0 5px, #3DDCFF1E 6px 7px)
+            `,
+            boxShadow: '0 0 0 1px #0B0B10, 0 0 0 5px #3DDCFF2A, 3px 4px 0 #000',
+            color: '#3DDCFF',
+            fontFamily: "'Space Grotesk'",
+            fontSize: 12,
+            fontWeight: 900,
+            letterSpacing: '0.14em',
+            lineHeight: 1.1,
+            textAlign: 'center',
+            textTransform: 'uppercase',
+            textShadow: '0 0 9px #3DDCFF70',
+            opacity: 0.92,
+            mixBlendMode: 'screen',
+          }}
+        >
+          Día finalizado
+          <br />
+          off the clock
+        </div>
       )}
       <BottomNav screen={screen} onNav={setScreen} />
 
