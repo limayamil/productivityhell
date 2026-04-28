@@ -214,6 +214,7 @@ export function rolloverDayIfNeeded(state) {
     round: emptyRound(1),
     day: { date: today, dayNumber: stateWithHistory.day.dayNumber + 1, rounds: [], startedAt: null, endedAt: null },
     meta: { ...stateWithHistory.meta, totalDays: stateWithHistory.meta.totalDays + 1 },
+    perks: [],
     pendingSummary: null,
   };
 }
@@ -683,4 +684,8 @@ export function toggleArchivedRoundRest(state, hourKey) {
 
 export function togglePerk(state, perkId) {
   return { ...state, perks: state.perks.map(p => p.id === perkId ? { ...p, active: !p.active } : p) };
+}
+
+export function deletePerk(state, perkId) {
+  return { ...state, perks: state.perks.filter(p => p.id !== perkId) };
 }

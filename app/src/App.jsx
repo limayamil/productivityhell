@@ -22,6 +22,7 @@ import {
   toggleArchivedRoundRest,
   claimPerkForRound,
   togglePerk,
+  deletePerk,
   addCategory as addCategoryAction,
   updateCategory as updateCategoryAction,
   deleteCategory as deleteCategoryAction,
@@ -279,6 +280,10 @@ export default function App() {
     setState(prev => togglePerk(prev, perkId));
   };
 
+  const handleDeletePerk = (perkId) => {
+    setState(prev => deletePerk(prev, perkId));
+  };
+
   const handleStartDay = () => {
     setOverlay('dayStartPerk');
   };
@@ -352,6 +357,7 @@ export default function App() {
             roundNumber={state.round.number}
             peakMultiplier={state.round.peakMultiplier}
             onTogglePerk={handleTogglePerk}
+            onDeletePerk={handleDeletePerk}
           />
         );
       default: return null;

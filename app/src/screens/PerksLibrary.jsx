@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import PerkCard from '../components/PerkCard';
 
 function withAffinityLabels(perks, categories) {
@@ -8,7 +9,58 @@ function withAffinityLabels(perks, categories) {
   });
 }
 
-export default function PerksLibrary({ perks = [], dailyPerk, categories = [], roundNumber = 1, peakMultiplier = 1.5, onTogglePerk }) {
+function DeletablePerkCard({ perk, onToggle, onDelete, animationDelay }) {
+  const [confirming, setConfirming] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    if (confirming) {
+      onDelete(perk.id);
+    } else {
+      setConfirming(true);
+      timerRef.current = setTimeout(() => setConfirming(false), 2500);
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <PerkCard perk={perk} large={false} onClick={onToggle} animationDelay={animationDelay} />
+      <button
+        onClick={handleDeleteClick}
+        style={{
+          position: 'absolute',
+          top: 6,
+          left: 6,
+          width: 20,
+          height: 20,
+          borderRadius: 3,
+          background: confirming ? '#FF3B3B' : '#1C1C2A',
+          border: `1px solid ${confirming ? '#FF3B3B' : '#3A3A4A'}`,
+          color: confirming ? '#fff' : '#5A5A6A',
+          fontSize: 10,
+          fontFamily: "'Space Mono', monospace",
+          fontWeight: 700,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          lineHeight: 1,
+          transition: 'all 150ms',
+          zIndex: 10,
+          boxShadow: confirming ? '0 0 8px #FF3B3B60' : 'none',
+        }}
+        title={confirming ? 'Confirmar borrado' : 'Borrar perk'}
+      >
+        {confirming ? '!' : '×'}
+      </button>
+    </div>
+  );
+}
+
+export default function PerksLibrary({ perks = [], dailyPerk, categories = [], roundNumber = 1, peakMultiplier = 1.5, onTogglePerk, onDeletePerk }) {
   const active   = perks.filter(p => p.active);
   const inactive = perks.filter(p => !p.active);
   const todayPerk = dailyPerk ? { ...dailyPerk, daily: true, recommendation: 'Daily pact - always active today' } : null;
@@ -60,7 +112,13 @@ export default function PerksLibrary({ perks = [], dailyPerk, categories = [], r
           </div>
           <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {withAffinityLabels(active, categories).map((p, index) => (
-              <PerkCard key={p.id} perk={p} large={false} onClick={() => onTogglePerk && onTogglePerk(p.id)} animationDelay={120 + index * 55} />
+              <DeletablePerkCard
+                key={p.id}
+                perk={p}
+                onToggle={() => onTogglePerk && onTogglePerk(p.id)}
+                onDelete={(id) => onDeletePerk && onDeletePerk(id)}
+                animationDelay={120 + index * 55}
+              />
             ))}
           </div>
 
@@ -71,7 +129,13 @@ export default function PerksLibrary({ perks = [], dailyPerk, categories = [], r
               </div>
               <div style={{ padding: '0 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {withAffinityLabels(inactive, categories).map((p, index) => (
-                  <PerkCard key={p.id} perk={p} large={false} onClick={() => onTogglePerk && onTogglePerk(p.id)} animationDelay={160 + index * 55} />
+                  <DeletablePerkCard
+                    key={p.id}
+                    perk={p}
+                    onToggle={() => onTogglePerk && onTogglePerk(p.id)}
+                    onDelete={(id) => onDeletePerk && onDeletePerk(id)}
+                    animationDelay={160 + index * 55}
+                  />
                 ))}
               </div>
             </>
