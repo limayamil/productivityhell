@@ -42,10 +42,10 @@ export default function DaySummary({ summary, categories = [], onClose }) {
   const rankColor = rank?.color || RANK_COLORS[rank?.rank] || '#FFD166';
 
   const breakdownRows = [
-    { label: 'Base score',        val: baseScore.toLocaleString(),   color: '#F0EDE8', prefix: '' },
-    { label: 'Urgency bonuses',   val: urgentBonus.toLocaleString(), color: '#FF3B3B', prefix: '+' },
-    { label: 'Perk bonuses',      val: perkBonus.toLocaleString(),   color: '#8F5CFF', prefix: '+' },
-    { label: 'Combo multipliers', val: comboBonus.toLocaleString(),  color: '#3DDCFF', prefix: '+' },
+    { label: 'Puntaje base',        val: baseScore.toLocaleString(),   color: '#F0EDE8', prefix: '' },
+    { label: 'Bonos por urgencia',   val: urgentBonus.toLocaleString(), color: '#FF3B3B', prefix: '+' },
+    { label: 'Bonos de perk',      val: perkBonus.toLocaleString(),   color: '#8F5CFF', prefix: '+' },
+    { label: 'Bonos de multiplicador', val: comboBonus.toLocaleString(),  color: '#3DDCFF', prefix: '+' },
   ];
 
   return (
@@ -73,16 +73,16 @@ export default function DaySummary({ summary, categories = [], onClose }) {
           {totalScore.toLocaleString()}
         </div>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
-          Day Score
+          Puntaje del dia
         </div>
       </div>
 
       <div style={{ display: 'flex', padding: '12px 16px', borderBottom: '1px solid #2A2A35' }}>
         {[
-          { val: cleared,                                label: 'Cleared',  color: '#7CFF6B' },
-          { val: survived,                               label: 'Survived', color: '#FFD166' },
-          { val: failed,                                 label: 'Failed',   color: '#FF3B3B' },
-          { val: rest,                                   label: 'Rest',     color: '#3DDCFF' },
+          { val: cleared,                                label: 'Limpias',  color: '#7CFF6B' },
+          { val: survived,                               label: 'Sobrevividas', color: '#FFD166' },
+          { val: failed,                                 label: 'Fallidas',   color: '#FF3B3B' },
+          { val: rest,                                   label: 'Descanso',     color: '#3DDCFF' },
           { val: `×${(peakMultiplier || 0).toFixed(2)}`, label: 'Peak',     color: '#8F5CFF' },
         ].map((s, i) => (
           <div key={s.label} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
@@ -97,7 +97,7 @@ export default function DaySummary({ summary, categories = [], onClose }) {
 
       <div style={{ padding: '16px' }}>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 10 }}>
-          Score Breakdown
+          Desglose del puntaje
         </div>
         {breakdownRows.map((row) => (
           <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #1E1E2A' }}>
@@ -113,7 +113,7 @@ export default function DaySummary({ summary, categories = [], onClose }) {
 
       <div style={{ padding: '0 16px 16px' }}>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 8 }}>
-          Hours · {hours.length}
+          Horas · {hours.length}
         </div>
         {hours.length === 0 && (
           <div style={{ fontFamily: "'Space Grotesk'", fontSize: 11, color: '#4A4A5A', fontStyle: 'italic', padding: '6px 0' }}>
@@ -127,7 +127,7 @@ export default function DaySummary({ summary, categories = [], onClose }) {
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: '#13131C', borderRadius: 4, border: '1px solid #1E1E2A', marginBottom: 5 }}>
               <span style={{ fontFamily: "'Bebas Neue'", fontSize: 14, color: '#F0EDE8', letterSpacing: '0.04em', width: 44, flexShrink: 0 }}>{h.hour}</span>
               <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: h.rest ? '#3DDCFF' : h.missed ? '#4A4A5A' : '#8A8A9A', flex: 1 }}>
-                {h.rest ? 'Descanso' : h.missed ? 'Missed' : `${h.completed?.length || 0} done${h.failed?.length ? ` · ${h.failed.length} failed` : ''}`}
+                {h.rest ? 'Descanso' : h.missed ? 'Perdida' : `${h.completed?.length || 0} hechas${h.failed?.length ? ` · ${h.failed.length} fallidas` : ''}`}
                 {h.live ? ' · live' : ''}
               </span>
               {hRankCode && !h.rest && !h.missed && (
@@ -144,7 +144,7 @@ export default function DaySummary({ summary, categories = [], onClose }) {
       {topCategories.length > 0 && (
         <div style={{ padding: '0 16px 16px' }}>
           <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 8 }}>
-            Top Categories
+            Categorias principales
           </div>
           {topCategories.map(c => (
             <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #1E1E2A' }}>
@@ -159,8 +159,8 @@ export default function DaySummary({ summary, categories = [], onClose }) {
       )}
 
       <div style={{ padding: '0 16px 16px', display: 'flex', gap: 8, color: '#4A4A5A', fontFamily: "'Space Grotesk'", fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', justifyContent: 'space-between' }}>
-        <span>Tasks done · <span style={{ color: '#7CFF6B' }}>{completedTasks}</span></span>
-        <span>Failed · <span style={{ color: '#FF3B3B' }}>{failedTasks}</span></span>
+        <span>Tareas hechas · <span style={{ color: '#7CFF6B' }}>{completedTasks}</span></span>
+        <span>Fallidas · <span style={{ color: '#FF3B3B' }}>{failedTasks}</span></span>
       </div>
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 'auto' }}>

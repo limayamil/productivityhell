@@ -182,7 +182,7 @@ export default function TaskCard({ task, categories, onComplete, index = 0, just
               border: '1px solid #FFD16650',
             }}>
               <AnimatedGradientText
-                text="x2 roll"
+                text="tirada x2"
                 gradient="linear-gradient(110deg, #FFD166, #F0EDE8, #7CFF6B, #3DDCFF, #FFD166)"
               />
             </span>

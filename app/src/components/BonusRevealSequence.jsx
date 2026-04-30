@@ -1,14 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function BonusRevealSequence({ anchor, beats, onEnd }) {
+export default function BonusRevealSequence({ anchor, beats, onBeat, onEnd }) {
   const [active, setActive] = useState([]);
   const idRef = useRef(0);
+  const onBeatRef = useRef(onBeat);
   const onEndRef = useRef(onEnd);
 
   useEffect(() => {
+    onBeatRef.current = onBeat;
     onEndRef.current = onEnd;
-  }, [onEnd]);
+  }, [onBeat, onEnd]);
 
   useEffect(() => {
     if (!beats || beats.length === 0) {
@@ -22,12 +24,13 @@ export default function BonusRevealSequence({ anchor, beats, onEnd }) {
     const run = (i) => {
       if (cancelled) return;
       if (i >= beats.length) {
-        const endTimer = setTimeout(() => onEndRef.current?.(), 380);
+        const endTimer = setTimeout(() => onEndRef.current?.(), 460);
         timers.push(endTimer);
         return;
       }
       const beat = beats[i];
       const id = ++idRef.current;
+      onBeatRef.current?.(i, beat);
       setActive(a => [...a, { id, beat }]);
 
       const lifetime = beat.kind === 'final' ? 1100 : 720;
@@ -36,7 +39,7 @@ export default function BonusRevealSequence({ anchor, beats, onEnd }) {
       }, lifetime);
       timers.push(removeTimer);
 
-      const interBeat = beat.kind === 'final' ? 360 : 280;
+      const interBeat = beat.kind === 'final' ? 440 : 360;
       const nextTimer = setTimeout(() => run(i + 1), interBeat);
       timers.push(nextTimer);
     };

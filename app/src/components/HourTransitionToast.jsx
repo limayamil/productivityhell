@@ -37,7 +37,7 @@ export default function HourTransitionToast({ pending, onOpen, onDismiss }) {
           fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700,
           textTransform: 'uppercase', letterSpacing: '0.12em', color: `${rank.color}CC`,
         }}>
-          Hour closed · tap for details
+          Hora cerrada · toca para ver detalles
         </div>
         <div style={{
           fontFamily: "'Space Mono'", fontSize: 20, fontWeight: 700, color: '#FFD166',

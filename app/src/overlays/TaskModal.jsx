@@ -23,6 +23,7 @@ export default function TaskModal({
   const [priority, setPriority] = useState('medium');
   const [duration, setDuration] = useState(defaultDuration);
   const [urgent,   setUrgent]   = useState(true);
+  const [destination, setDestination] = useState('active');
 
   const [manageOpen, setManageOpen] = useState(false);
   const [editingId,  setEditingId]  = useState(null);
@@ -60,7 +61,7 @@ export default function TaskModal({
 
   const handleAdd = () => {
     if (!title.trim()) return;
-    onAdd && onAdd({ title: title.trim(), category: cat, priority, duration, points: basePoints, urgent, done: false, id: Date.now() });
+    onAdd && onAdd({ title: title.trim(), category: cat, priority, duration, points: basePoints, urgent, done: false, id: Date.now() }, destination);
     onClose();
   };
 
@@ -84,7 +85,7 @@ export default function TaskModal({
         <div style={{ width: 36, height: 4, background: '#2A2A35', borderRadius: 2, margin: '12px auto 0' }} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 16px 0' }}>
-          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em' }}>Load Task</div>
+          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em' }}>Cargar tarea</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ fontFamily: "'Space Mono'", fontSize: 11, color: selPriority.color, background: selPriority.color + '15', border: `1px solid ${selPriority.color}40`, padding: '4px 10px', borderRadius: 4 }}>
               +{basePoints} pts base
@@ -103,11 +104,49 @@ export default function TaskModal({
           <div style={{ height: 14 }} />
 
           <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
-            Task name
+            Destino
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+            {[
+              { id: 'active', label: 'Ahora', hint: 'entra a la ronda' },
+              { id: 'inbox', label: 'Bandeja', hint: 'para mas tarde' },
+            ].map(option => {
+              const active = destination === option.id;
+              const color = option.id === 'active' ? '#FF3B3B' : '#3DDCFF';
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={active ? 'arcadePressable' : undefined}
+                  onClick={() => setDestination(option.id)}
+                  style={{
+                    padding: '10px 10px',
+                    borderRadius: 6,
+                    border: `1px solid ${active ? color + '80' : '#2A2A35'}`,
+                    background: active ? color + '18' : '#1C1C2A',
+                    color: active ? color : '#8A8A9A',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    boxShadow: active ? `0 0 12px ${color}25` : 'none',
+                  }}
+                >
+                  <span style={{ display: 'block', fontFamily: "'Bebas Neue'", fontSize: 18, letterSpacing: '0.08em', lineHeight: 1 }}>
+                    {option.label}
+                  </span>
+                  <span style={{ display: 'block', fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: active ? '#F0EDE8' : '#4A4A5A', marginTop: 3 }}>
+                    {option.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
+            Nombre de la tarea
           </label>
           <input
             style={{ width: '100%', background: '#1C1C2A', border: '1px solid #2A2A35', borderRadius: 6, padding: '12px 14px', fontFamily: "'Space Grotesk'", fontSize: 14, color: '#F0EDE8', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }}
-            placeholder="What must be sacrificed?"
+            placeholder="¿Que hay que sacrificar?"
             value={title}
             onChange={e => setTitle(e.target.value)}
             autoFocus
@@ -115,14 +154,14 @@ export default function TaskModal({
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A' }}>
-              Category
+              Categoria
             </label>
             <button
               type="button"
               onClick={() => { setManageOpen(o => !o); cancelEdit(); }}
               style={{ background: 'transparent', border: '1px solid #2A2A35', color: manageOpen ? '#FF3B3B' : '#8A8A9A', fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 8px', borderRadius: 4, cursor: 'pointer' }}
             >
-              {manageOpen ? 'Done' : 'Manage'}
+              {manageOpen ? 'Listo' : 'Gestionar'}
             </button>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: manageOpen ? 10 : 16 }}>
@@ -145,7 +184,7 @@ export default function TaskModal({
             <div style={{ background: '#0F0F18', border: '1px solid #2A2A35', borderRadius: 6, padding: 10, marginBottom: 16 }}>
               {editingId ? (
                 <div>
-                  <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6 }}>Edit category</div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6 }}>Editar categoria</div>
                   <input
                     value={draftLabel}
                     onChange={e => setDraftLabel(e.target.value)}
@@ -161,16 +200,16 @@ export default function TaskModal({
                     ))}
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button type="button" onClick={saveEdit} style={{ flex: 1, padding: '8px', background: '#3DDCFF20', border: '1px solid #3DDCFF60', color: '#3DDCFF', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Save</button>
-                    <button type="button" onClick={cancelEdit} style={{ padding: '8px 10px', background: 'transparent', border: '1px solid #2A2A35', color: '#8A8A9A', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
+                    <button type="button" onClick={saveEdit} style={{ flex: 1, padding: '8px', background: '#3DDCFF20', border: '1px solid #3DDCFF60', color: '#3DDCFF', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Guardar</button>
+                    <button type="button" onClick={cancelEdit} style={{ padding: '8px 10px', background: 'transparent', border: '1px solid #2A2A35', color: '#8A8A9A', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Cancelar</button>
                     {cats.length > 1 && (
-                      <button type="button" onClick={() => handleDelete(editingId)} style={{ padding: '8px 10px', background: '#FF3B3B20', border: '1px solid #FF3B3B60', color: '#FF3B3B', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Delete</button>
+                      <button type="button" onClick={() => handleDelete(editingId)} style={{ padding: '8px 10px', background: '#FF3B3B20', border: '1px solid #FF3B3B60', color: '#FF3B3B', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: 'pointer' }}>Borrar</button>
                     )}
                   </div>
                 </div>
               ) : (
                 <div>
-                  <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6 }}>New category</div>
+                  <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6 }}>Nueva categoria</div>
                   <input
                     value={newLabel}
                     onChange={e => setNewLabel(e.target.value)}
@@ -192,7 +231,7 @@ export default function TaskModal({
                     disabled={!newLabel.trim()}
                     style={{ width: '100%', padding: '8px', background: newLabel.trim() ? '#FF3B3B' : '#2A2A35', border: 'none', color: '#fff', fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: 4, cursor: newLabel.trim() ? 'pointer' : 'not-allowed' }}
                   >
-                    + Create category
+                    + Crear categoria
                   </button>
                 </div>
               )}
@@ -200,7 +239,7 @@ export default function TaskModal({
           )}
 
           <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
-            Priority
+            Prioridad
           </label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
             {PRIORITIES.map(p => (
@@ -209,7 +248,7 @@ export default function TaskModal({
           </div>
 
           <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
-            Estimate
+            Estimacion
           </label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
             {optionList.map(d => (
@@ -229,8 +268,8 @@ export default function TaskModal({
             >
               <div style={{ position: 'absolute', top: 2, left: urgent ? 18 : 2, width: 14, height: 14, borderRadius: 7, background: '#fff', transition: 'left 200ms cubic-bezier(0.22,1,0.36,1)' }} />
             </div>
-            <span style={{ fontFamily: "'Space Grotesk'", fontSize: 11, color: urgent ? '#FF3B3B' : '#4A4A5A', fontWeight: 600 }}>Before this hour ends</span>
-            <span style={{ fontFamily: "'Space Mono'", fontSize: 11, color: '#4A4A5A', marginLeft: 'auto' }}>×1.5 if urgent</span>
+            <span style={{ fontFamily: "'Space Grotesk'", fontSize: 11, color: urgent ? '#FF3B3B' : '#4A4A5A', fontWeight: 600 }}>Antes de que termine esta hora</span>
+            <span style={{ fontFamily: "'Space Mono'", fontSize: 11, color: '#4A4A5A', marginLeft: 'auto' }}>×1.5 si es urgente</span>
           </div>
         </div>
 
@@ -244,7 +283,7 @@ export default function TaskModal({
             }}
             onClick={handleAdd}
           >
-            Throw it in →
+            {destination === 'inbox' ? 'Dejar en bandeja →' : 'Mandarla al infierno →'}
           </button>
         </div>
       </div>

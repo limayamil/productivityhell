@@ -130,6 +130,7 @@ export function createInitialState() {
     history: { days: [] },
     perks: [],
     categories: DEFAULT_CATEGORIES.map(c => ({ ...c })),
+    taskInbox: [],
     meta: { totalDays: 1, lifetimeScore: 0 },
     pendingSummary: null,
   };
@@ -167,7 +168,8 @@ export function ensureCategories(state) {
   const migratedDay = day.startedAt === undefined
     ? { ...day, startedAt: state.round?.startedAt || Date.now(), endedAt: null }
     : day;
-  return { ...state, categories, perks, day: migratedDay, history: normalizeHistory(state.history) };
+  const taskInbox = Array.isArray(state.taskInbox) ? state.taskInbox : [];
+  return { ...state, categories, perks, taskInbox, day: migratedDay, history: normalizeHistory(state.history) };
 }
 
 const slugify = (s) =>
@@ -337,6 +339,26 @@ export function buildDaySummary(state) {
 export function addTask(state, task) {
   const taskWithPerks = applyCreationPerks(state, task);
   return { ...state, round: { ...state.round, rest: false, tasks: [...state.round.tasks, taskWithPerks] } };
+}
+
+export function addInboxTask(state, task) {
+  if (!task) return state;
+  return { ...state, taskInbox: [...(state.taskInbox || []), task] };
+}
+
+export function takeInboxTask(state, taskId) {
+  const task = (state.taskInbox || []).find(t => t.id === taskId);
+  if (!task) return state;
+  const taskWithPerks = applyCreationPerks(state, { ...task, done: false });
+  return {
+    ...state,
+    taskInbox: (state.taskInbox || []).filter(t => t.id !== taskId),
+    round: {
+      ...state.round,
+      rest: false,
+      tasks: [...state.round.tasks, taskWithPerks],
+    },
+  };
 }
 
 export function toggleCurrentRoundRest(state) {

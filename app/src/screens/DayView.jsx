@@ -1,11 +1,11 @@
 const STATUS_STYLES = {
-  cleared:  { color: '#7CFF6B', border: '#7CFF6B40', bg: '#7CFF6B08', label: 'Cleared'  },
-  survived: { color: '#FFD166', border: '#FFD16640', bg: '#FFD16608', label: 'Survived' },
-  failed:   { color: '#FF3B3B', border: '#FF3B3B40', bg: '#FF3B3B08', label: 'Failed'   },
-  missed:   { color: '#4A4A5A', border: '#2A2A35',   bg: '#13131C',   label: 'Missed'   },
+  cleared:  { color: '#7CFF6B', border: '#7CFF6B40', bg: '#7CFF6B08', label: 'Limpia'  },
+  survived: { color: '#FFD166', border: '#FFD16640', bg: '#FFD16608', label: 'Sobrevivida' },
+  failed:   { color: '#FF3B3B', border: '#FF3B3B40', bg: '#FF3B3B08', label: 'Fallida'   },
+  missed:   { color: '#4A4A5A', border: '#2A2A35',   bg: '#13131C',   label: 'Perdida'   },
   rest:     { color: '#3DDCFF', border: '#3DDCFF50', bg: '#3DDCFF08', label: 'Descanso' },
-  active:   { color: '#3DDCFF', border: '#3DDCFF60', bg: '#3DDCFF10', label: 'Active'   },
-  upcoming: { color: '#2A2A35', border: '#2A2A35',   bg: '#13131C',   label: 'Upcoming' },
+  active:   { color: '#3DDCFF', border: '#3DDCFF60', bg: '#3DDCFF10', label: 'Activa'   },
+  upcoming: { color: '#2A2A35', border: '#2A2A35',   bg: '#13131C',   label: 'Proxima' },
 };
 
 const RANK_COLORS = { F:'#4A4A5A', D:'#8A8A9A', C:'#FFD166', B:'#FF3B3B', A:'#3DDCFF', S:'#8F5CFF', SS:'#FFD166', SSS:'#FF3B3B' };
@@ -36,7 +36,7 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
 
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' }}>Today's Run</div>
+          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' }}>Carrera de hoy</div>
           {dayEndedAt && (
             <span style={{
               fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase',
@@ -48,16 +48,16 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
           )}
         </div>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
-          {formatDate(date)} · {rounds.length} {rounds.length === 1 ? 'round' : 'rounds'} · Day {dayNumber}
+          {formatDate(date)} · {rounds.length} {rounds.length === 1 ? 'ronda' : 'rondas'} · Dia {dayNumber}
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 0, padding: '12px 16px', borderBottom: '1px solid #2A2A35' }}>
         {[
-          { val: totalScore.toLocaleString(), label: 'Day Score', color: '#FFD166' },
-          { val: completedRounds,             label: 'Cleared',   color: '#7CFF6B' },
-          { val: failedRounds,                label: 'Failed',    color: '#FF3B3B' },
-          { val: restRounds,                  label: 'Rest',      color: '#3DDCFF' },
+          { val: totalScore.toLocaleString(), label: 'Puntaje del dia', color: '#FFD166' },
+          { val: completedRounds,             label: 'Limpias',   color: '#7CFF6B' },
+          { val: failedRounds,                label: 'Fallidas',    color: '#FF3B3B' },
+          { val: restRounds,                  label: 'Descanso',      color: '#3DDCFF' },
           { val: perksCount,                  label: 'Perks',     color: '#8F5CFF' },
         ].map((s, i) => (
           <div key={s.label} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
@@ -77,7 +77,7 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
             textAlign: 'center', color: '#4A4A5A',
             fontFamily: "'Space Grotesk'", fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
           }}>
-            No rounds yet today
+            Aun no hay rondas hoy
           </div>
         )}
         {rounds.map((r, i) => {
@@ -112,8 +112,8 @@ export default function DayView({ rounds = [], date, dayNumber = 1, perksCount =
                   {s.label}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#7CFF6B' }}>{r.tasks} done</span>
-                  {(r.failedCount ?? r.failed) > 0 && <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#FF3B3B80' }}>· {r.failedCount ?? r.failed} failed</span>}
+                  <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#7CFF6B' }}>{r.tasks} hechas</span>
+                  {(r.failedCount ?? r.failed) > 0 && <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#FF3B3B80' }}>· {r.failedCount ?? r.failed} fallidas</span>}
                   {r.mult && <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#4A4A5A' }}>· {r.mult}</span>}
                 </div>
                 {r.perks && r.perks.length > 0 && (

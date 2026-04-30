@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import Dashboard     from './screens/Dashboard';
 import DayView       from './screens/DayView';
@@ -17,6 +17,8 @@ import {
   reconcileClock,
   dismissPendingSummary,
   addTask as addTaskAction,
+  addInboxTask as addInboxTaskAction,
+  takeInboxTask as takeInboxTaskAction,
   completeTask as completeTaskAction,
   toggleCurrentRoundRest,
   toggleArchivedRoundRest,
@@ -32,11 +34,12 @@ import {
   buildDaySummary,
   applyPerk,
 } from './state/gameState';
+import { playCueSound } from './utils/scoreSound';
 
 const NAV_ITEMS = [
-  { id: 'dashboard', icon: '◉', label: 'Round' },
-  { id: 'day',       icon: '▦', label: 'Day'   },
-  { id: 'week',      icon: 'W', label: 'Week'  },
+  { id: 'dashboard', icon: '◉', label: 'Ronda' },
+  { id: 'day',       icon: '▦', label: 'Dia'   },
+  { id: 'week',      icon: 'week', label: 'Semana'  },
   { id: 'perks',     icon: '◆', label: 'Perks' },
 ];
 
@@ -105,6 +108,68 @@ const BACKDROP_CHAOS = {
   },
 };
 
+const BUBBLE_COLORS = [
+  'rgba(255, 59, 59, 0.56)',
+  'rgba(255, 209, 102, 0.50)',
+  'rgba(255, 122, 26, 0.44)',
+  'rgba(143, 92, 255, 0.36)',
+  'rgba(61, 220, 255, 0.28)',
+];
+
+function seededRandom(seed) {
+  let h = 2166136261;
+  const input = String(seed);
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+
+  return () => {
+    h += h << 13; h ^= h >>> 7;
+    h += h << 3; h ^= h >>> 17;
+    h += h << 5;
+    return ((h >>> 0) % 10000) / 10000;
+  };
+}
+
+function buildBackdropBubbles(seed, chaosLevel) {
+  const rand = seededRandom(`${seed}-${chaosLevel}`);
+  const countByLevel = { calm: 10, ember: 18, heat: 26, inferno: 34 };
+  const driftByLevel = { calm: 14, ember: 24, heat: 36, inferno: 54 };
+  const count = countByLevel[chaosLevel] || countByLevel.calm;
+  const drift = driftByLevel[chaosLevel] || driftByLevel.calm;
+
+  return Array.from({ length: count }, (_, index) => {
+    const size = 2 + rand() * (chaosLevel === 'inferno' ? 8 : 6);
+    const x1 = (rand() * 2 - 1) * drift;
+    const y1 = (rand() * 2 - 1) * drift;
+    const x2 = (rand() * 2 - 1) * drift;
+    const y2 = (rand() * 2 - 1) * drift;
+    const x3 = (rand() * 2 - 1) * drift;
+    const y3 = (rand() * 2 - 1) * drift;
+
+    return {
+      id: `${seed}-${index}`,
+      left: `${-6 + rand() * 112}%`,
+      top: `${-6 + rand() * 112}%`,
+      size,
+      color: BUBBLE_COLORS[Math.floor(rand() * BUBBLE_COLORS.length)],
+      blur: 0.2 + rand() * 1.8,
+      duration: `${10 + rand() * 18}s`,
+      delay: `${rand() * -18}s`,
+      opacity: 0.42 + rand() * 0.58,
+      x1: `${x1}px`,
+      y1: `${y1}px`,
+      x2: `${x2}px`,
+      y2: `${y2}px`,
+      x3: `${x3}px`,
+      y3: `${y3}px`,
+      pulseDuration: `${2.4 + rand() * 3.8}s`,
+      pulseDelay: `${rand() * -4}s`,
+    };
+  });
+}
+
 function FabIcon({ type, active = false }) {
   const stroke = active ? '#0B0B10' : 'currentColor';
 
@@ -166,6 +231,23 @@ function FabIcon({ type, active = false }) {
 }
 
 function BottomNav({ screen, onNav }) {
+  const renderIcon = item => {
+    if (item.icon !== 'week') return item.icon;
+
+    return (
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        style={{ width: 17, height: 17, display: 'block' }}
+        fill="none"
+      >
+        <rect x="4" y="5" width="16" height="15" rx="2.5" stroke="currentColor" strokeWidth="2" />
+        <path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" />
+      </svg>
+    );
+  };
+
   return (
     <div style={{ position: 'sticky', bottom: 0, background: 'rgba(13,13,20,0.88)', backdropFilter: 'blur(10px)', borderTop: '1px solid #2A2A35', display: 'flex', zIndex: 50 }}>
       {NAV_ITEMS.map(item => {
@@ -185,9 +267,9 @@ function BottomNav({ screen, onNav }) {
           >
             <span
               className={active ? 'activeNavIcon' : undefined}
-              style={{ fontSize: 16, color: active ? '#FF3B3B' : '#4A4A5A', lineHeight: 1, textShadow: active ? '0 0 10px #FF3B3B80' : 'none' }}
+              style={{ fontSize: 16, color: active ? '#FF3B3B' : '#4A4A5A', lineHeight: 1, textShadow: active ? '0 0 10px #FF3B3B80' : 'none', height: 17, display: 'flex', alignItems: 'center' }}
             >
-              {item.icon}
+              {renderIcon(item)}
             </span>
             <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: active ? '#F0EDE8' : '#4A4A5A' }}>
               {item.label}
@@ -220,9 +302,10 @@ function getBackdropChaosLevel(round) {
   return 'calm';
 }
 
-function AnimatedGradientBackdrop({ phase, chaosLevel }) {
+function AnimatedGradientBackdrop({ phase, chaosLevel, seed }) {
   const colors = GRADIENT_PHASES[phase] || GRADIENT_PHASES.early;
   const chaos = BACKDROP_CHAOS[chaosLevel] || BACKDROP_CHAOS.calm;
+  const bubbles = useMemo(() => buildBackdropBubbles(seed, chaosLevel), [seed, chaosLevel]);
 
   return (
     <div
@@ -257,17 +340,47 @@ function AnimatedGradientBackdrop({ phase, chaosLevel }) {
         position: 'absolute',
         inset: '-18%',
         opacity: chaos.emberOpacity,
-        background: `
-          radial-gradient(circle at 18% 82%, rgba(255, 59, 59, 0.55) 0 3px, transparent 4px 100%),
-          radial-gradient(circle at 72% 22%, rgba(255, 209, 102, 0.48) 0 2px, transparent 3px 100%),
-          radial-gradient(circle at 84% 72%, rgba(255, 122, 26, 0.42) 0 2px, transparent 3px 100%)
-        `,
-        backgroundSize: '58px 74px, 83px 67px, 71px 91px',
-        filter: 'blur(0.6px)',
         mixBlendMode: 'screen',
-        animation: 'backgroundAsh 12s linear infinite',
         transition: 'opacity 900ms ease',
-      }} />
+      }}>
+        {bubbles.map(bubble => (
+          <span
+            key={bubble.id}
+            style={{
+              position: 'absolute',
+              left: bubble.left,
+              top: bubble.top,
+              width: bubble.size,
+              height: bubble.size,
+              borderRadius: '50%',
+              '--bubble-x1': bubble.x1,
+              '--bubble-y1': bubble.y1,
+              '--bubble-x2': bubble.x2,
+              '--bubble-y2': bubble.y2,
+              '--bubble-x3': bubble.x3,
+              '--bubble-y3': bubble.y3,
+              animation: `backgroundBubbleDrift ${bubble.duration} cubic-bezier(0.45, 0.05, 0.2, 1) infinite`,
+              animationDelay: bubble.delay,
+              willChange: 'transform',
+            }}
+          >
+            <span
+              style={{
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: bubble.color,
+                opacity: bubble.opacity,
+                filter: `blur(${bubble.blur}px)`,
+                boxShadow: `0 0 ${Math.max(8, bubble.size * 2)}px ${bubble.color}`,
+                animation: `backgroundBubblePulse ${bubble.pulseDuration} ease-in-out infinite`,
+                animationDelay: bubble.pulseDelay,
+              }}
+            />
+          </span>
+        ))}
+      </div>
       <div style={{
         position: 'absolute',
         inset: '-10%',
@@ -293,12 +406,56 @@ function AnimatedGradientBackdrop({ phase, chaosLevel }) {
   );
 }
 
+function StatusStamp({ lines, ariaLabel }) {
+  return (
+    <div
+      aria-label={ariaLabel}
+      style={{
+        position: 'absolute',
+        left: '50%',
+        bottom: 88,
+        transform: 'translateX(-50%) rotate(-4deg)',
+        zIndex: 55,
+        pointerEvents: 'none',
+        minWidth: 168,
+        padding: '9px 16px 8px',
+        border: '3px solid #3DDCFF',
+        borderRadius: 4,
+        background: `
+          linear-gradient(135deg, #3DDCFF14, #0B0B1000 58%),
+          repeating-linear-gradient(-18deg, #3DDCFF00 0 5px, #3DDCFF1E 6px 7px)
+        `,
+        boxShadow: '0 0 0 1px #0B0B10, 0 0 0 5px #3DDCFF2A, 3px 4px 0 #000',
+        color: '#3DDCFF',
+        fontFamily: "'Space Grotesk'",
+        fontSize: 12,
+        fontWeight: 900,
+        letterSpacing: '0.14em',
+        lineHeight: 1.1,
+        textAlign: 'center',
+        textTransform: 'uppercase',
+        textShadow: '0 0 9px #3DDCFF70',
+        opacity: 0.92,
+        mixBlendMode: 'screen',
+      }}
+    >
+      {lines.map((line, index) => (
+        <span key={line}>
+          {index > 0 && <br />}
+          {line}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function App() {
   const [state, setState] = useLocalStorage(STORAGE_KEY, createInitialState);
   const [screen,  setScreen]  = useState('dashboard');
   const [overlay, setOverlay] = useState(null);
   const [selectedHourKey, setSelectedHourKey] = useState(null);
   const [, setBackdropTick] = useState(0);
+  const lastAnnouncedHourKeyRef = useRef(state.pendingSummary?.hourKey || null);
 
   useEffect(() => {
     setState(prev => reconcileClock(rolloverDayIfNeeded(prev)));
@@ -313,14 +470,30 @@ export default function App() {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    const hourKey = state.pendingSummary?.hourKey;
+    if (!hourKey || lastAnnouncedHourKeyRef.current === hourKey) return;
+    lastAnnouncedHourKeyRef.current = hourKey;
+    playCueSound('hourChange');
+  }, [state.pendingSummary?.hourKey]);
+
   const selectedRound = useMemo(
     () => state.day.rounds.find(r => r.hourKey === selectedHourKey) || null,
     [state.day.rounds, selectedHourKey]
   );
 
-  const handleAddTask = (task) => {
-    if (task) setState(prev => addTaskAction(prev, task));
+  const handleAddTask = (task, destination = 'active') => {
+    if (task) {
+      setState(prev => destination === 'inbox'
+        ? addInboxTaskAction(prev, task)
+        : addTaskAction(prev, task)
+      );
+    }
     setOverlay(null);
+  };
+
+  const handleTakeInboxTask = (taskId) => {
+    setState(prev => takeInboxTaskAction(prev, taskId));
   };
 
   const handleCompleteTask = (taskId) => {
@@ -372,6 +545,7 @@ export default function App() {
   };
 
   const handleStartDay = () => {
+    playCueSound('start');
     setOverlay('dayStartPerk');
   };
 
@@ -401,6 +575,7 @@ export default function App() {
   const dailyPerk = getDailyPerk();
   const backdropPhase = getRoundPhase(state.round);
   const backdropChaosLevel = dayPhase === 'closed' ? 'calm' : getBackdropChaosLevel(state.round);
+  const backdropSeed = `${state.round?.number || 1}-${state.round?.hourKey || state.round?.startedAt || 'idle'}`;
 
   const renderScreen = () => {
     switch (screen) {
@@ -411,7 +586,9 @@ export default function App() {
             perks={state.perks}
             dailyPerk={dailyPerk}
             categories={state.categories}
+            inboxTasks={state.taskInbox || []}
             onCompleteTask={handleCompleteTask}
+            onTakeInboxTask={handleTakeInboxTask}
             dayPhase={dayPhase}
             dayNumber={state.meta.totalDays}
             onStartDay={handleStartDay}
@@ -478,8 +655,23 @@ export default function App() {
           from { transform: translate3d(-2%, 8%, 0) rotate(0deg); background-position: 0 0, 30px 20px, 12px 44px; }
           to { transform: translate3d(3%, -8%, 0) rotate(5deg); background-position: 90px -160px, -80px -130px, 110px -190px; }
         }
+
+        @keyframes backgroundBubbleDrift {
+          0% { transform: translate3d(0, 0, 0) scale(0.82); }
+          19% { transform: translate3d(var(--bubble-x1), var(--bubble-y1), 0) scale(1.08); }
+          43% { transform: translate3d(var(--bubble-x2), var(--bubble-y2), 0) scale(0.94); }
+          71% { transform: translate3d(var(--bubble-x3), var(--bubble-y3), 0) scale(1.18); }
+          100% { transform: translate3d(0, 0, 0) scale(0.82); }
+        }
+
+        @keyframes backgroundBubblePulse {
+          0%, 100% { opacity: 0.35; transform: scale(0.72); }
+          27% { opacity: 0.9; transform: scale(1.22); }
+          58% { opacity: 0.52; transform: scale(0.88); }
+          81% { opacity: 1; transform: scale(1.04); }
+        }
       `}</style>
-      <AnimatedGradientBackdrop phase={backdropPhase} chaosLevel={backdropChaosLevel} />
+      <AnimatedGradientBackdrop phase={backdropPhase} chaosLevel={backdropChaosLevel} seed={backdropSeed} />
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
         {renderScreen()}
       </div>
@@ -572,9 +764,15 @@ export default function App() {
           </button>
         </>
       )}
-      {dayPhase === 'closed' && (
+      {screen === 'dashboard' && dayPhase === 'active' && state.round.rest && (
+        <StatusStamp
+          ariaLabel="Hora de descanso"
+          lines={['Hora de', 'Descanso']}
+        />
+      )}
+      {screen === 'dashboard' && dayPhase === 'closed' && (
         <div
-          aria-label="Dia finalizado, off the clock"
+          aria-label="Dia finalizado, fuera de horario"
           style={{
             position: 'absolute',
             left: '50%',
@@ -606,7 +804,7 @@ export default function App() {
         >
           Día finalizado
           <br />
-          off the clock
+          fuera de horario
         </div>
       )}
       <BottomNav screen={screen} onNav={setScreen} />

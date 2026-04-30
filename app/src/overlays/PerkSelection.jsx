@@ -54,7 +54,7 @@ function reasonFor(perk, insights) {
     return {
       score: 60,
       boundCategory: insights.dominantCategory,
-      recommendation: `Favored: ${insights.dominantLabel} tasks this round`,
+      recommendation: `Favorece: tareas de ${insights.dominantLabel} en esta ronda`,
     };
   }
 
@@ -62,7 +62,7 @@ function reasonFor(perk, insights) {
     return {
       score: 58,
       boundCategory: insights.strugglingCategory,
-      recommendation: `Recovery: ${insights.strugglingLabel} tasks were left behind`,
+      recommendation: `Recuperacion: quedaron tareas de ${insights.strugglingLabel} atras`,
     };
   }
 
@@ -70,27 +70,27 @@ function reasonFor(perk, insights) {
     return {
       score: 52,
       boundCategory: insights.suggestedCategory,
-      recommendation: `Marked: ${insights.suggestedLabel} tasks may roll x2`,
+      recommendation: `Marcada: las tareas de ${insights.suggestedLabel} pueden salir x2`,
     };
   }
 
   if (perk.effect.kind === 'durationPercent' && insights.averageDuration >= 25) {
-    return { score: 46, recommendation: 'Favored: longer tasks this round' };
+    return { score: 46, recommendation: 'Favorece: tareas largas en esta ronda' };
   }
 
   if (perk.effect.kind === 'priorityFlat' && insights.highPriorityCount > 0) {
-    return { score: 44, recommendation: 'Favored: high-priority work appeared' };
+    return { score: 44, recommendation: 'Favorece: aparecio trabajo de alta prioridad' };
   }
 
   if (perk.effect.kind === 'urgentRisk' && (insights.urgentCompleted > 0 || insights.urgentFailed > 0)) {
-    return { score: 42, recommendation: 'Favored: urgent tasks are in the mix' };
+    return { score: 42, recommendation: 'Favorece: hay tareas urgentes en juego' };
   }
 
   if (perk.effect.kind === 'lastMinutePercent' && insights.urgentFailed > 0) {
-    return { score: 40, recommendation: 'Favored: late tasks need a comeback' };
+    return { score: 40, recommendation: 'Favorece: las tareas tardias necesitan remontada' };
   }
 
-  return { score: 10 + Math.random() * 8, recommendation: 'Wildcard: opens a new build path' };
+  return { score: 10 + Math.random() * 8, recommendation: 'Comodin: abre una nueva ruta de build' };
 }
 
 function pushUnique(list, perk) {
@@ -144,15 +144,15 @@ export default function PerkSelection({
 
       <div className="arcadeEnter" style={{ padding: '20px 16px 0', textAlign: 'center' }}>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#4A4A5A' }}>
-          {isDayStart ? 'Inicio del día · Bono de arranque' : `Round ${String(roundNumber).padStart(2, '0')} Complete - Choose your reward`}
+          {isDayStart ? 'Inicio del dia · Bono de arranque' : `Ronda ${String(roundNumber).padStart(2, '0')} completa - Elige tu recompensa`}
         </div>
         <div style={{ fontFamily: "'Bebas Neue'", fontSize: 44, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1, marginTop: 4 }}>
-          {isDayStart ? 'Elige tu perk inicial' : 'Select a Perk'}
+          {isDayStart ? 'Elige tu perk inicial' : 'Elige un perk'}
         </div>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 12, color: '#8A8A9A', marginTop: 6, lineHeight: 1.4 }}>
           {isDayStart
             ? 'Un perk activo durante todo el día. Elige bien.'
-            : 'One perk. One deal. The offer bends toward your last round.'}
+            : 'Un perk. Un pacto. La oferta se inclina hacia tu ultima ronda.'}
         </div>
       </div>
 
@@ -160,8 +160,8 @@ export default function PerkSelection({
       <div style={{ display: 'flex', justifyContent: 'center', gap: 24, margin: '16px 0 24px', padding: '12px 16px', borderTop: '1px solid #2A2A35', borderBottom: '1px solid #2A2A35' }}>
         {[
           { val: roundScore.toLocaleString(),    label: 'Score',     color: '#FFD166' },
-          { val: roundRank,                       label: 'Rank',      color: '#8F5CFF' },
-          { val: `x${peakMultiplier.toFixed(2)}`, label: 'Peak Mult', color: '#3DDCFF' },
+          { val: roundRank,                       label: 'Rango',      color: '#8F5CFF' },
+          { val: `x${peakMultiplier.toFixed(2)}`, label: 'Mult pico', color: '#3DDCFF' },
         ].map((s, i, arr) => (
           <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
             <div style={{ textAlign: 'center' }}>
@@ -203,13 +203,13 @@ export default function PerkSelection({
           }}
           onClick={() => selected && onSelect && onSelect(selPerk)}
         >
-          {selected ? `Claim ${selPerk.name} ->` : 'Select a perk to continue'}
+          {selected ? `Reclamar ${selPerk.name} ->` : 'Selecciona un perk para continuar'}
         </button>
         <button
           style={{ width: '100%', padding: '10px', background: 'transparent', border: 'none', color: '#4A4A5A', fontFamily: "'Space Grotesk'", fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer', marginTop: 8 }}
           onClick={() => onSelect && onSelect(null)}
         >
-          Skip - No deal this round
+          Saltar - Sin pacto esta ronda
         </button>
       </div>
     </div>

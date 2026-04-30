@@ -4,14 +4,15 @@ import TaskCard from '../components/TaskCard';
 import PerkIcon from '../components/PerkIcon';
 import PerkCard from '../components/PerkCard';
 import BonusRevealSequence from '../components/BonusRevealSequence';
-import { RARITY_STYLES, TARGET_SCORE } from '../data/constants';
+import { CAT_COLORS, PRIORITY_COLORS, RARITY_STYLES, TARGET_SCORE } from '../data/constants';
+import { playScoreSound } from '../utils/scoreSound';
 
 const STATUS_MAP = {
-  safe:  { label: 'Safe',         color: '#7CFF6B', bg: '#7CFF6B15', border: '#7CFF6B40' },
-  risky: { label: 'Risky',        color: '#FFD166', bg: '#FFD16615', border: '#FFD16640' },
+  safe:  { label: 'Seguro',         color: '#7CFF6B', bg: '#7CFF6B15', border: '#7CFF6B40' },
+  risky: { label: 'Riesgo',        color: '#FFD166', bg: '#FFD16615', border: '#FFD16640' },
   rest:  { label: 'Descanso',     color: '#3DDCFF', bg: '#3DDCFF15', border: '#3DDCFF50' },
   hell:  { label: '⚡ Hell Mode', color: '#FF3B3B', bg: '#FF3B3B20', border: '#FF3B3B50' },
-  off:   { label: 'Off Hours',    color: '#3DDCFF', bg: '#3DDCFF12', border: '#3DDCFF40' },
+  off:   { label: 'Fuera de horario',    color: '#3DDCFF', bg: '#3DDCFF12', border: '#3DDCFF40' },
 };
 
 const RARITY_COLORS = {
@@ -19,6 +20,13 @@ const RARITY_COLORS = {
   common: '#8A8A9A', uncommon: '#7CFF6B', rare: '#3DDCFF',
   epic: '#8F5CFF', legendary: '#FFD166', cursed: '#FF3B3B', hellborn: '#FFD166',
 };
+
+function countScoreModifiers(breakdown) {
+  const perkCount = (breakdown?.triggeredPerks || []).filter(p => p.bonus > 0).length;
+  const urgentCount = (breakdown?.urgentBonus || 0) > 0 ? 1 : 0;
+  const multiplierCount = (breakdown?.multiplierBonus || 0) > 0 ? 1 : 0;
+  return perkCount + urgentCount + multiplierCount;
+}
 
 function computeTimeLeft(round) {
   return Math.max(0, round.startedAt + round.durationMs - Date.now());
@@ -29,7 +37,7 @@ function roundTimeLabel(startedAt, number) {
   const hh = String(d.getHours()).padStart(2, '0');
   const next = new Date(startedAt + 60 * 60 * 1000);
   const nh = String(next.getHours()).padStart(2, '0');
-  return `Round ${String(number).padStart(2, '0')} · ${hh}:00–${nh}:00`;
+  return `Ronda ${String(number).padStart(2, '0')} · ${hh}:00-${nh}:00`;
 }
 
 function hourRangeLabel(startedAt) {
@@ -49,13 +57,24 @@ function roundNumberFxClass(number) {
 }
 
 const APP_TITLE = 'Productivity Hell';
+const TITLE_GRADIENT_TEXT_STYLE = {
+  background: 'linear-gradient(110deg, #FF3B3B, #FFD166, #FF3B3B)',
+  backgroundSize: '240% 100%',
+  backgroundClip: 'text',
+  WebkitBackgroundClip: 'text',
+  color: 'transparent',
+  WebkitTextFillColor: 'transparent',
+  animation: 'animatedTextGradient 2.8s ease-in-out infinite',
+  textShadow: '0 0 8px #FF3B3B40',
+};
 
-export default function Dashboard({ round, perks, dailyPerk, categories, onCompleteTask, dayPhase = 'active', dayNumber = 1, onStartDay }) {
+export default function Dashboard({ round, perks, dailyPerk, categories, inboxTasks = [], onCompleteTask, onTakeInboxTask, dayPhase = 'active', dayNumber = 1, onStartDay }) {
   const [, setTick] = useState(0);
   const [floaters, setFloaters] = useState([]);
   const [hoveredPerk, setHoveredPerk] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [reveal, setReveal] = useState(null);
+  const [inboxOpen, setInboxOpen] = useState(() => inboxTasks.length > 0);
 
   useEffect(() => {
     const t = setInterval(() => setTick(n => n + 1), 1000);
@@ -68,6 +87,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
   const streak = round.streak;
   const tasks = round.tasks;
   const isRest = !!round.rest;
+  const inboxExpanded = inboxOpen && inboxTasks.length > 0;
   const activePerks = [
     ...(dailyPerk ? [{ ...dailyPerk, active: true, daily: true }] : []),
     ...perks.filter(p => p.active),
@@ -78,6 +98,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
   const progress = Math.min(score / TARGET_SCORE, 1);
 
   const isClosed = dayPhase === 'closed';
+  const canTakeInbox = dayPhase === 'active';
   const roundStatus =
     isClosed ? 'off'
     : isRest ? 'rest'
@@ -133,12 +154,14 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
       });
     }
     const finalSize = 30 + Math.min(beats.length, 7) * 4;
+    const finalSound = countScoreModifiers(breakdown) >= 3 ? 'victory' : 'win';
     beats.push({
       kind: 'final',
       text: `+${earned}`,
       label: 'TOTAL',
       color: '#FFD166',
       size: finalSize,
+      sound: finalSound,
     });
     return beats;
   };
@@ -160,6 +183,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
     }
 
     const fid = Date.now() + Math.random();
+    playScoreSound(0);
     setFeedback({ id: fid, taskId: id, multUp: !multiplierWasCapped });
     setFloaters(f => [...f, { id: fid, text: `+${earned}`, x: Math.random() * 60 + 20, multUp: !multiplierWasCapped }]);
     setTimeout(() => setFloaters(f => f.filter(fl => fl.id !== fid)), 1050);
@@ -175,7 +199,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
   const perkWithAffinityLabel = (perk) => {
     if (!perk.boundCategory) return perk;
     const label = categories?.find(c => c.id === perk.boundCategory)?.label || perk.boundCategory;
-    return { ...perk, recommendation: `Bound: ${label}` };
+    return { ...perk, recommendation: `Ligado a: ${label}` };
   };
 
   const showPerkDetails = (perk, event) => {
@@ -198,26 +222,18 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
     return (
       <div style={{ background: 'rgba(11,11,16,0.68)', minHeight: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', backdropFilter: 'saturate(1.05)' }}>
         <style>{`
-          @keyframes titleLetterPulse {
-            0%, 100% { color: #FF3B3B; transform: translateY(0); text-shadow: 0 0 6px #FF3B3B30; }
-            50% { color: #FFD166; transform: translateY(-1px); text-shadow: 0 0 10px #FF3B3B85, 0 0 5px #FFD16655; }
-          }
           @keyframes startPulse { from{box-shadow: 3px 3px 0px #000, 0 0 18px #FF3B3B40} to{box-shadow: 3px 3px 0px #000, 0 0 32px #FF3B3B80} }
         `}</style>
         <div className="crtOverlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, background: 'repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)' }} />
-        <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
+        <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35', background: 'linear-gradient(to top, transparent 0%, rgba(255, 59, 59, 0.16) 100%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/favicon.png" alt="" aria-hidden="true" style={{ width: 64, height: 64, flex: '0 0 64px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px #FF3B3B55) drop-shadow(0 0 5px #3DDCFF33)' }} />
+            <img src="/favicon.png" alt="" aria-hidden="true" style={{ width: 48, height: 48, flex: '0 0 48px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px #FF3B3B55) drop-shadow(0 0 5px #3DDCFF33)' }} />
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 13, letterSpacing: '0.14em', color: '#FF3B3B', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                {APP_TITLE.split('').map((char, index) => (
-                  <span key={`${char}-${index}`} style={{ display: 'inline-block', animation: 'titleLetterPulse 2.8s ease-in-out infinite', animationDelay: `${index * 0.045}s` }}>
-                    {char === ' ' ? ' ' : char}
-                  </span>
-                ))}
+              <div style={{ fontFamily: "'Bebas Neue'", fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', ...TITLE_GRADIENT_TEXT_STYLE }}>
+                {APP_TITLE}
               </div>
               <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em', lineHeight: 1, marginTop: 4 }}>
-                Day {String(dayNumber).padStart(2, '0')} · standby
+                Dia {String(dayNumber).padStart(2, '0')} · en espera
               </div>
             </div>
           </div>
@@ -262,13 +278,13 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
     <div style={{ background: 'rgba(11,11,16,0.68)', minHeight: '100%', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', backdropFilter: 'saturate(1.05)' }}>
       <style>{`
         @keyframes hellpulse { from{box-shadow:0 0 6px #FF3B3B30} to{box-shadow:0 0 14px #FF3B3B80} }
-        @keyframes titleLetterPulse {
-          0%, 100% { color: #FF3B3B; transform: translateY(0); text-shadow: 0 0 6px #FF3B3B30; }
-          50% { color: #FFD166; transform: translateY(-1px); text-shadow: 0 0 10px #FF3B3B85, 0 0 5px #FFD16655; }
-        }
         @keyframes activePerkGlowPulse {
           0%, 100% { opacity: 0.35; transform: scale(0.82); filter: blur(5px); }
           50% { opacity: 0.95; transform: scale(1.18); filter: blur(8px); }
+        }
+        @keyframes inboxCollapsedGlow {
+          0%, 100% { box-shadow: 2px 2px 0 #000, inset 0 0 0 1px #3DDCFF10, 0 0 7px #3DDCFF18; border-color: #3DDCFF35; }
+          50% { box-shadow: 2px 2px 0 #000, inset 0 0 0 1px #3DDCFF22, 0 0 16px #3DDCFF35; border-color: #3DDCFF55; }
         }
       `}</style>
 
@@ -278,6 +294,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
         <BonusRevealSequence
           anchor={reveal.anchor}
           beats={reveal.beats}
+          onBeat={(index, beat) => playScoreSound(index, beat.sound)}
           onEnd={handleRevealEnd}
         />
       )}
@@ -298,34 +315,23 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
         </div>
       ))}
 
-      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
+      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35', background: 'linear-gradient(to top, transparent 0%, rgba(255, 59, 59, 0.16) 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
             src="/favicon.png"
             alt=""
             aria-hidden="true"
             style={{
-              width: 64,
-              height: 64,
-              flex: '0 0 64px',
+              width: 48,
+              height: 48,
+              flex: '0 0 48px',
               objectFit: 'contain',
               filter: 'drop-shadow(0 0 8px #FF3B3B55) drop-shadow(0 0 5px #3DDCFF33)',
             }}
           />
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 17, letterSpacing: '0.12em', color: '#FF3B3B', textTransform: 'uppercase', whiteSpace: 'nowrap', lineHeight: 1 }}>
-              {APP_TITLE.split('').map((char, index) => (
-                <span
-                  key={`${char}-${index}`}
-                  style={{
-                    display: 'inline-block',
-                    animation: 'titleLetterPulse 2.8s ease-in-out infinite',
-                    animationDelay: `${index * 0.045}s`,
-                  }}
-                >
-                  {char === ' ' ? '\u00A0' : char}
-                </span>
-              ))}
+            <div style={{ fontFamily: "'Bebas Neue'", fontSize: 17, letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap', lineHeight: 1, ...TITLE_GRADIENT_TEXT_STYLE }}>
+              {APP_TITLE}
             </div>
             <div style={{ fontFamily: "'Space Mono'", fontSize: 11, color: '#6A6A7A', letterSpacing: '0.03em', lineHeight: 1, marginTop: 6 }}>
               {hourRangeLabel(round.startedAt)}
@@ -369,7 +375,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             {mins}:{secs}
           </div>
           <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#4A4A5A', marginTop: 2 }}>
-            until next hour
+            hasta la siguiente hora
           </div>
         </div>
         <div style={{ display: 'flex', gap: 0, alignItems: 'stretch' }}>
@@ -378,7 +384,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
               {score.toLocaleString()}
             </div>
             <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#FFD166', marginTop: 2 }}>
-              Points
+              Puntos
             </div>
           </div>
           <div style={{ width: 1, background: '#2A2A35', margin: '0 16px' }} />
@@ -396,7 +402,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
               {streak}
             </div>
             <div style={{ fontFamily: "'Space Grotesk'", fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#3DDCFF', marginTop: 2 }}>
-              Streak
+              Racha
             </div>
           </div>
         </div>
@@ -419,7 +425,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
 
       <div style={{ padding: '0 16px 12px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {activePerks.length === 0 && (
-          <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#4A4A5A', fontStyle: 'italic' }}>none</span>
+          <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#4A4A5A', fontStyle: 'italic' }}>ninguno</span>
         )}
         {activePerks.map((p, index) => {
           const r = RARITY_STYLES[p.rarity] || RARITY_STYLES.common;
@@ -492,12 +498,132 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
         document.body
       )}
 
+      <div style={{ padding: '0 16px 12px' }}>
+        <div style={{
+          border: '1px solid #3DDCFF35',
+          borderRadius: 7,
+          background: '#101018',
+          boxShadow: '2px 2px 0 #000, inset 0 0 0 1px #3DDCFF10',
+          animation: inboxTasks.length > 0 && !inboxExpanded ? 'inboxCollapsedGlow 2.8s ease-in-out infinite' : 'none',
+          overflow: 'hidden',
+        }}>
+          <button
+            type="button"
+            aria-expanded={inboxExpanded}
+            aria-label={`Bandeja: ${inboxTasks.length} tareas`}
+            onClick={() => setInboxOpen(open => inboxTasks.length > 0 ? !open : false)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '8px 10px',
+              border: 'none',
+              background: 'transparent',
+              color: '#3DDCFF',
+              cursor: inboxTasks.length > 0 ? 'pointer' : 'default',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <svg aria-hidden="true" viewBox="0 0 24 24" style={{ width: 18, height: 18, display: 'block' }} fill="none">
+                <path d="M5 4h14l1.5 10h-5l-1.2 2.5H9.7L8.5 14h-5L5 4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                <path d="M4 14v5h16v-5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              <span style={{ fontFamily: "'Space Mono'", fontSize: 11, color: inboxTasks.length ? '#3DDCFF' : '#4A4A5A' }}>
+                {inboxTasks.length}
+              </span>
+            </span>
+            <span style={{
+              fontFamily: "'Space Mono'",
+              fontSize: 11,
+              color: inboxTasks.length ? '#3DDCFF' : '#4A4A5A',
+              transform: inboxExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+              transition: 'transform 160ms cubic-bezier(0.22,1,0.36,1)',
+            }}>
+              &gt;
+            </span>
+          </button>
+
+          {inboxExpanded && (
+            <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {inboxTasks.map((task, index) => {
+                const priorityStyle = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.medium;
+                const catEntry = categories?.find(c => c.id === task.category);
+                const catColor = catEntry?.color || CAT_COLORS[task.category?.toLowerCase()] || '#8A8A9A';
+                const catLabel = catEntry?.label || task.category;
+                return (
+                  <div
+                    key={task.id}
+                    className="arcadeEnter"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '9px 10px',
+                      borderRadius: 6,
+                      border: '1px solid #2A2A35',
+                      background: '#101018',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '--arcade-delay': `${Math.min(index * 35, 180)}ms`,
+                    }}
+                  >
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: catColor, opacity: 0.85 }} />
+                    <div style={{ flex: 1, minWidth: 0, paddingLeft: 3 }}>
+                      <div style={{ fontFamily: "'Space Grotesk'", fontSize: 12, fontWeight: 700, color: '#F0EDE8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {task.title}
+                      </div>
+                      <div style={{ display: 'flex', gap: 5, marginTop: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: "'Space Grotesk'", fontSize: 8, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', color: catColor, background: catColor + '15', padding: '2px 5px', borderRadius: 2 }}>
+                          {catLabel}
+                        </span>
+                        <span style={{ fontFamily: "'Space Grotesk'", fontSize: 8, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', color: priorityStyle.color, background: priorityStyle.bg, padding: '2px 5px', borderRadius: 2 }}>
+                          {task.priority}
+                        </span>
+                        <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: '#4A4A5A' }}>
+                          {task.duration} min
+                        </span>
+                        <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: priorityStyle.color }}>
+                          +{task.points}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className={canTakeInbox ? 'arcadePressable' : undefined}
+                      disabled={!canTakeInbox}
+                      onClick={() => canTakeInbox && onTakeInboxTask && onTakeInboxTask(task.id)}
+                      style={{
+                        flex: '0 0 auto',
+                        padding: '8px 10px',
+                        borderRadius: 5,
+                        border: `1px solid ${canTakeInbox ? '#3DDCFF70' : '#2A2A35'}`,
+                        background: canTakeInbox ? '#3DDCFF18' : '#1C1C2A',
+                        color: canTakeInbox ? '#3DDCFF' : '#4A4A5A',
+                        fontFamily: "'Space Grotesk'",
+                        fontSize: 9,
+                        fontWeight: 900,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        cursor: canTakeInbox ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      Tomar
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px 8px' }}>
         <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A' }}>
-          Active Tasks · {tasks.filter(t => !t.done).length} remaining
+          Tareas activas · {tasks.filter(t => !t.done).length} restantes
         </span>
         <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#7CFF6B' }}>
-          {tasks.filter(t => t.done).length} done
+          {tasks.filter(t => t.done).length} hechas
         </span>
       </div>
 
@@ -508,7 +634,7 @@ export default function Dashboard({ round, perks, dailyPerk, categories, onCompl
             textAlign: 'center', color: isRest ? '#3DDCFF' : '#4A4A5A',
             fontFamily: "'Space Grotesk'", fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
           }}>
-            No tasks loaded · tap + to start
+            No hay tareas cargadas · toca + para empezar
           </div>
         )}
         {tasks.map((t, index) => (

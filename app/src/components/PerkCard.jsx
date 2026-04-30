@@ -9,8 +9,8 @@ export default function PerkCard({ perk, onClick, selected, large = false, anima
   const effectLabel = typeof perk.effect === 'string' ? perk.effect : perk.effect?.label;
   const description = perk.description || perk.desc;
   const rewardBonus = RARITY_REWARD_BONUS[perk.rarity] || 0;
-  const rewardLabel = rewardBonus > 0 ? `+${Math.round(rewardBonus * 100)}% reward` : null;
-  const rawRarityLabel = perk.daily ? 'daily' : perk.rarity;
+  const rewardLabel = rewardBonus > 0 ? `+${Math.round(rewardBonus * 100)}%` : null;
+  const rawRarityLabel = perk.daily ? 'diario' : perk.rarity;
   const rarityLabel = rawRarityLabel
     ? rawRarityLabel.charAt(0).toUpperCase() + rawRarityLabel.slice(1)
     : '';
@@ -102,17 +102,30 @@ export default function PerkCard({ perk, onClick, selected, large = false, anima
             style={{
               flexShrink: 0,
               fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: large ? 9 : 8,
+              fontSize: large ? 14 : 12,
               fontWeight: 900,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: r.color,
               whiteSpace: 'nowrap',
               lineHeight: 1,
               '--rarity-drift': r.gradient ? '-2px' : '-1px',
             }}
           >
-            <AnimatedGradientText text={rewardLabel} gradient={rarityGradient} wave={false} />
+            <span
+              style={{
+                display: 'inline-block',
+                background: rarityGradient,
+                backgroundSize: '220% 100%',
+                backgroundPosition: '0% 50%',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                WebkitTextFillColor: 'transparent',
+                filter: r.glow === 'none' ? 'none' : `drop-shadow(0 0 8px ${r.color}40)`,
+              }}
+            >
+              {rewardLabel}
+            </span>
           </div>
         )}
       </div>

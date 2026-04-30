@@ -80,17 +80,17 @@ export default function WeekView({ historyDays = [], currentDaySummary = null, c
 
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #2A2A35' }}>
         <div style={{ fontFamily: "'Bebas Neue'", fontSize: 28, color: '#F0EDE8', letterSpacing: '0.04em' }}>
-          Week Run
+          Semana
         </div>
         <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, color: '#4A4A5A', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
-          {formatShortDate(weekDays[0].date)} - {formatShortDate(weekDays[6].date)} - last 7 days
+          {formatShortDate(weekDays[0].date)} - {formatShortDate(weekDays[6].date)} - ultimos 7 dias
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, padding: '12px 16px', borderBottom: '1px solid #2A2A35' }}>
         {[
           { val: totalScore.toLocaleString(), label: 'Score', color: '#FFD166' },
-          { val: completedTasks, label: 'Tasks', color: '#7CFF6B' },
+          { val: completedTasks, label: 'Tareas', color: '#7CFF6B' },
           { val: activeDays.length, label: 'Active', color: '#3DDCFF' },
           { val: bestRank || '-', label: 'Best', color: bestRankColor },
         ].map((s, i) => (
@@ -111,7 +111,7 @@ export default function WeekView({ historyDays = [], currentDaySummary = null, c
           const rankColor = RANK_COLORS[rank] || '#4A4A5A';
           const categoriesForDay = topCategories(day, categories);
           const statusColor = !isActive ? '#4A4A5A' : today && !day.endedAt ? '#3DDCFF' : '#7CFF6B';
-          const statusLabel = !isActive ? 'Off' : today && !day.endedAt ? 'Live' : 'Closed';
+          const statusLabel = !isActive ? 'Off' : today && !day.endedAt ? 'En vivo' : 'Cerrado';
 
           return (
             <div
@@ -147,10 +147,10 @@ export default function WeekView({ historyDays = [], currentDaySummary = null, c
                   </div>
 
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 4 }}>
-                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#7CFF6B' }}>{day?.completedTasks || 0} done</span>
-                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#FF3B3B80' }}>{day?.failedTasks || 0} failed</span>
-                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#3DDCFF' }}>{day?.rest || 0} rest</span>
-                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#4A4A5A' }}>{day?.hours?.length || 0} rounds</span>
+                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#7CFF6B' }}>{day?.completedTasks || 0} hechas</span>
+                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#FF3B3B80' }}>{day?.failedTasks || 0} fallidas</span>
+                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#3DDCFF' }}>{day?.rest || 0} descanso</span>
+                    <span style={{ fontFamily: "'Space Grotesk'", fontSize: 9, color: '#4A4A5A' }}>{day?.hours?.length || 0} rondas</span>
                   </div>
 
                   {categoriesForDay.length > 0 && (
