@@ -6,6 +6,7 @@ import PerkCard from '../components/PerkCard';
 import BonusRevealSequence from '../components/BonusRevealSequence';
 import { CAT_COLORS, PRIORITY_COLORS, RARITY_STYLES, TARGET_SCORE } from '../data/constants';
 import { playScoreSound } from '../utils/scoreSound';
+import introHellGate from '../assets/intro-hell-gate-transparent.png';
 
 const STATUS_MAP = {
   safe:  { label: 'Seguro',         color: '#7CFF6B', bg: '#7CFF6B15', border: '#7CFF6B40' },
@@ -239,12 +240,31 @@ export default function Dashboard({ round, perks, dailyPerk, categories, inboxTa
           </div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', gap: 18 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '22px 24px 30px', gap: 14 }}>
           <div style={{ fontFamily: "'Space Grotesk'", fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#4A4A5A', textAlign: 'center' }}>
             Día sin iniciar
           </div>
+          <div style={{
+            width: 236,
+            maxWidth: '82%',
+            height: 252,
+            position: 'relative',
+            filter: 'drop-shadow(0 0 18px #FF3B3B40) drop-shadow(0 0 10px #3DDCFF22)',
+          }}>
+            <img
+              src={introHellGate}
+              alt="Portal pixel art hacia el infierno productivo"
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                objectFit: 'contain',
+                imageRendering: 'pixelated',
+              }}
+            />
+          </div>
           <div style={{ fontFamily: "'Bebas Neue'", fontSize: 32, color: '#F0EDE8', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.1 }}>
-            ¿Listo para entrar al<br />Hell?
+            ¿Listo para entrar al infierno?
           </div>
           <button
             className="arcadePressable"
