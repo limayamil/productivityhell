@@ -6,6 +6,9 @@ const COLOR_PALETTE = ['#FF3B3B', '#FF8C42', '#FFD166', '#7CFF6B', '#3DDCFF', '#
 export default function TaskModal({
   onClose,
   onAdd,
+  onSave,
+  task = null,
+  mode = 'create',
   maxDurationMin = 60,
   categories,
   onAddCategory,
@@ -15,14 +18,18 @@ export default function TaskModal({
   const cats = categories && categories.length ? categories : DEFAULT_CATS;
   const cap = Math.max(1, Math.floor(maxDurationMin));
   const allowed = DURATIONS.filter(d => d <= cap);
+  const editMode = mode === 'edit' && task;
   const optionList = allowed.length > 0 ? allowed : [cap];
-  const defaultDuration = optionList[optionList.length - 1];
+  const durationOptions = editMode && task.duration && !optionList.includes(task.duration)
+    ? [...optionList, task.duration].sort((a, b) => a - b)
+    : optionList;
+  const defaultDuration = durationOptions[durationOptions.length - 1];
 
-  const [title,    setTitle]    = useState('');
-  const [cat,      setCat]      = useState(cats[0]?.id || 'dev');
-  const [priority, setPriority] = useState('medium');
-  const [duration, setDuration] = useState(defaultDuration);
-  const [urgent,   setUrgent]   = useState(true);
+  const [title,    setTitle]    = useState(task?.title || '');
+  const [cat,      setCat]      = useState(task?.category || cats[0]?.id || 'dev');
+  const [priority, setPriority] = useState(task?.priority || 'medium');
+  const [duration, setDuration] = useState(task?.duration || defaultDuration);
+  const [urgent,   setUrgent]   = useState(task?.urgent ?? true);
   const [destination, setDestination] = useState('active');
 
   const [manageOpen, setManageOpen] = useState(false);
@@ -61,7 +68,13 @@ export default function TaskModal({
 
   const handleAdd = () => {
     if (!title.trim()) return;
-    onAdd && onAdd({ title: title.trim(), category: cat, priority, duration, points: basePoints, urgent, done: false, id: Date.now() }, destination);
+    const payload = { title: title.trim(), category: cat, priority, duration, points: basePoints, urgent, done: false };
+    if (editMode) {
+      onSave && onSave(payload);
+      onClose();
+      return;
+    }
+    onAdd && onAdd({ ...payload, id: Date.now() }, destination);
     onClose();
   };
 
@@ -85,7 +98,7 @@ export default function TaskModal({
         <div style={{ width: 36, height: 4, background: '#2A2A35', borderRadius: 2, margin: '12px auto 0' }} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 16px 0' }}>
-          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em' }}>Cargar tarea</div>
+          <div style={{ fontFamily: "'Bebas Neue'", fontSize: 24, color: '#F0EDE8', letterSpacing: '0.04em' }}>{editMode ? 'Modificar tarea' : 'Cargar tarea'}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ fontFamily: "'Space Mono'", fontSize: 11, color: selPriority.color, background: selPriority.color + '15', border: `1px solid ${selPriority.color}40`, padding: '4px 10px', borderRadius: 4 }}>
               +{basePoints} pts base
@@ -103,6 +116,8 @@ export default function TaskModal({
         <div style={{ padding: '16px 16px 0' }}>
           <div style={{ height: 14 }} />
 
+          {!editMode && (
+            <>
           <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
             Destino
           </label>
@@ -140,6 +155,8 @@ export default function TaskModal({
               );
             })}
           </div>
+            </>
+          )}
 
           <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
             Nombre de la tarea
@@ -251,7 +268,7 @@ export default function TaskModal({
             Estimacion
           </label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {optionList.map(d => (
+            {durationOptions.map(d => (
               <div key={d} style={chip(duration === d, '#3DDCFF')} onClick={() => setDuration(d)}>{d} min</div>
             ))}
             <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: '#4A4A5A', alignSelf: 'center', marginLeft: 'auto' }}>
@@ -283,7 +300,7 @@ export default function TaskModal({
             }}
             onClick={handleAdd}
           >
-            {destination === 'inbox' ? 'Dejar en bandeja →' : 'Mandarla al infierno →'}
+            {editMode ? 'Guardar cambios' : destination === 'inbox' ? 'Dejar en bandeja →' : 'Mandarla al infierno →'}
           </button>
         </div>
       </div>

@@ -66,7 +66,7 @@ function BreakdownTooltip({ breakdown, earned, anchor }) {
   );
 }
 
-export default function TaskCard({ task, categories, onComplete, index = 0, justCompleted = false, suppressDone = false }) {
+export default function TaskCard({ task, categories, onComplete, onEdit, onDelete, index = 0, justCompleted = false, suppressDone = false }) {
   const [scoreAnchor, setScoreAnchor] = useState(null);
   const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.medium;
   const catEntry = categories?.find(c => c.id === task.category);
@@ -75,12 +75,27 @@ export default function TaskCard({ task, categories, onComplete, index = 0, just
   const showAsDone = task.done && !suppressDone;
   const displayPoints = showAsDone && task.earned ? task.earned : task.points;
   const rolledDouble = task.creationPerk?.multiplier === 2;
+  const canManage = !task.done;
   const triggerComplete = (e) => {
     if (task.done) return;
     if (!onComplete) return;
     const rect = e.currentTarget.getBoundingClientRect();
     onComplete(task.id, rect);
   };
+  const actionButton = (color) => ({
+    width: 26,
+    height: 26,
+    borderRadius: 4,
+    border: `1px solid ${color}55`,
+    background: color + '14',
+    color,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    padding: 0,
+    flex: '0 0 auto',
+  });
 
   return (
     <div
@@ -189,6 +204,43 @@ export default function TaskCard({ task, categories, onComplete, index = 0, just
           )}
         </div>
       </div>
+
+      {canManage && (
+        <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+          <button
+            type="button"
+            className="arcadePressable"
+            title="Editar tarea"
+            aria-label={`Editar ${task.title}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit && onEdit(task.id);
+            }}
+            style={actionButton('#3DDCFF')}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" style={{ width: 14, height: 14, display: 'block' }} fill="none">
+              <path d="M4 20h4l11-11-4-4L4 16v4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              <path d="m13.5 6.5 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="arcadePressable"
+            title="Borrar tarea"
+            aria-label={`Borrar ${task.title}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete && onDelete(task.id);
+            }}
+            style={actionButton('#FF3B3B')}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" style={{ width: 14, height: 14, display: 'block' }} fill="none">
+              <path d="M5 7h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="M9 7V5h6v2M8 10l1 9h6l1-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <div
         style={{

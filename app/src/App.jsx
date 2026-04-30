@@ -17,6 +17,8 @@ import {
   reconcileClock,
   dismissPendingSummary,
   addTask as addTaskAction,
+  updateTask as updateTaskAction,
+  deleteTask as deleteTaskAction,
   addInboxTask as addInboxTaskAction,
   takeInboxTask as takeInboxTaskAction,
   completeTask as completeTaskAction,
@@ -481,6 +483,13 @@ export default function App() {
     () => state.day.rounds.find(r => r.hourKey === selectedHourKey) || null,
     [state.day.rounds, selectedHourKey]
   );
+  const overlayType = typeof overlay === 'string' ? overlay : overlay?.type;
+  const editingTask = useMemo(
+    () => overlayType === 'taskModal' && overlay?.taskId
+      ? state.round.tasks.find(t => t.id === overlay.taskId) || null
+      : null,
+    [overlay, overlayType, state.round.tasks]
+  );
 
   const handleAddTask = (task, destination = 'active') => {
     if (task) {
@@ -494,6 +503,21 @@ export default function App() {
 
   const handleTakeInboxTask = (taskId) => {
     setState(prev => takeInboxTaskAction(prev, taskId));
+  };
+
+  const handleOpenEditTask = (taskId) => {
+    setOverlay({ type: 'taskModal', taskId });
+  };
+
+  const handleSaveTask = (patch) => {
+    if (editingTask) {
+      setState(prev => updateTaskAction(prev, editingTask.id, patch));
+    }
+    setOverlay(null);
+  };
+
+  const handleDeleteTask = (taskId) => {
+    setState(prev => deleteTaskAction(prev, taskId));
   };
 
   const handleCompleteTask = (taskId) => {
@@ -589,6 +613,8 @@ export default function App() {
             inboxTasks={state.taskInbox || []}
             onCompleteTask={handleCompleteTask}
             onTakeInboxTask={handleTakeInboxTask}
+            onEditTask={handleOpenEditTask}
+            onDeleteTask={handleDeleteTask}
             dayPhase={dayPhase}
             dayNumber={state.meta.totalDays}
             onStartDay={handleStartDay}
@@ -758,7 +784,7 @@ export default function App() {
               boxShadow: '3px 3px 0px #000, 0 0 16px #FF3B3B60',
               zIndex: 60,
             }}
-            onClick={() => setOverlay('taskModal')}
+            onClick={() => setOverlay({ type: 'taskModal' })}
           >
             <FabIcon type="plus" />
           </button>
@@ -815,17 +841,20 @@ export default function App() {
         onDismiss={() => setState(prev => dismissPendingSummary(prev))}
       />
 
-      {overlay === 'taskModal' && (
+      {overlayType === 'taskModal' && (
         <TaskModal
           onClose={() => setOverlay(null)}
           onAdd={handleAddTask}
+          onSave={handleSaveTask}
+          task={editingTask}
+          mode={editingTask ? 'edit' : 'create'}
           maxDurationMin={remainingMinFor(state.round)}
           categories={state.categories}
           {...categoryHandlers}
         />
       )}
 
-      {overlay === 'roundSummary' && selectedRound && (
+      {overlayType === 'roundSummary' && selectedRound && (
         <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
           <RoundSummary
             summary={selectedRound}
@@ -838,7 +867,7 @@ export default function App() {
         </div>
       )}
 
-      {overlay === 'daySummary' && (
+      {overlayType === 'daySummary' && (
         <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
           <DaySummary
             summary={daySummary}
@@ -848,7 +877,7 @@ export default function App() {
         </div>
       )}
 
-      {overlay === 'dayStartPerk' && (
+      {overlayType === 'dayStartPerk' && (
         <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
           <PerkSelection
             mode="dayStart"
@@ -860,7 +889,7 @@ export default function App() {
         </div>
       )}
 
-      {overlay === 'perkSelection' && selectedRound && (
+      {overlayType === 'perkSelection' && selectedRound && (
         <div className="overlayIn" style={{ position: 'fixed', inset: 0, zIndex: 200, overflowY: 'auto', background: 'rgba(11,11,16,0.94)' }}>
           <PerkSelection
             roundNumber={selectedRound.roundNumber}

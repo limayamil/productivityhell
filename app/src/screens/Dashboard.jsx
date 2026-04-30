@@ -69,7 +69,7 @@ const TITLE_GRADIENT_TEXT_STYLE = {
   textShadow: '0 0 8px #FF3B3B40',
 };
 
-export default function Dashboard({ round, perks, dailyPerk, categories, inboxTasks = [], onCompleteTask, onTakeInboxTask, dayPhase = 'active', dayNumber = 1, onStartDay }) {
+export default function Dashboard({ round, perks, dailyPerk, categories, inboxTasks = [], onCompleteTask, onTakeInboxTask, onEditTask, onDeleteTask, dayPhase = 'active', dayNumber = 1, onStartDay }) {
   const [, setTick] = useState(0);
   const [floaters, setFloaters] = useState([]);
   const [hoveredPerk, setHoveredPerk] = useState(null);
@@ -189,6 +189,11 @@ export default function Dashboard({ round, perks, dailyPerk, categories, inboxTa
     setFloaters(f => [...f, { id: fid, text: `+${earned}`, x: Math.random() * 60 + 20, multUp: !multiplierWasCapped }]);
     setTimeout(() => setFloaters(f => f.filter(fl => fl.id !== fid)), 1050);
     setTimeout(() => setFeedback(current => current?.id === fid ? null : current), 620);
+  };
+
+  const handleDeleteTask = (id) => {
+    if (!window.confirm('¿Borrar esta tarea?')) return;
+    onDeleteTask && onDeleteTask(id);
   };
 
   const handleRevealEnd = () => {
@@ -666,6 +671,8 @@ export default function Dashboard({ round, perks, dailyPerk, categories, inboxTa
             index={index}
             justCompleted={feedback?.taskId === t.id}
             suppressDone={reveal?.taskId === t.id}
+            onEdit={onEditTask}
+            onDelete={handleDeleteTask}
           />
         ))}
       </div>

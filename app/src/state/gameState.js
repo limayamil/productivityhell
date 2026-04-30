@@ -8,6 +8,7 @@ import {
   DAILY_PERKS,
   RARITY_REWARD_BONUS,
   CATEGORIES as DEFAULT_CATEGORIES,
+  PRIORITIES,
   getRank,
 } from '../data/constants';
 
@@ -80,6 +81,11 @@ function applyCreationPerks(state, task) {
       rewardBonus: rarityRewardBonus(matchingPerk),
     },
   };
+}
+
+function taskBasePoints(priority, duration) {
+  const selectedPriority = PRIORITIES.find(p => p.id === priority) || PRIORITIES.find(p => p.id === 'medium') || PRIORITIES[0];
+  return (selectedPriority?.pts || 0) + Math.floor((Number(duration) || 0) * 2.5);
 }
 
 export function currentHourStart(now = Date.now()) {
@@ -339,6 +345,48 @@ export function buildDaySummary(state) {
 export function addTask(state, task) {
   const taskWithPerks = applyCreationPerks(state, task);
   return { ...state, round: { ...state.round, rest: false, tasks: [...state.round.tasks, taskWithPerks] } };
+}
+
+export function updateTask(state, taskId, patch) {
+  const task = state.round.tasks.find(t => t.id === taskId);
+  if (!task || task.done) return state;
+
+  const nextPriority = patch.priority ?? task.priority;
+  const nextDuration = patch.duration ?? task.duration;
+  const basePoints = taskBasePoints(nextPriority, nextDuration);
+  const hasCreationBonus = !!(task.creationPerk || task.originalPoints);
+  const creationMultiplier = task.creationPerk?.multiplier;
+  const points = creationMultiplier ? Math.round(basePoints * creationMultiplier) : basePoints;
+
+  return {
+    ...state,
+    round: {
+      ...state.round,
+      tasks: state.round.tasks.map(t => {
+        if (t.id !== taskId) return t;
+        return {
+          ...t,
+          ...patch,
+          priority: nextPriority,
+          duration: nextDuration,
+          points,
+          ...(hasCreationBonus ? { originalPoints: basePoints } : {}),
+        };
+      }),
+    },
+  };
+}
+
+export function deleteTask(state, taskId) {
+  const task = state.round.tasks.find(t => t.id === taskId);
+  if (!task || task.done) return state;
+  return {
+    ...state,
+    round: {
+      ...state.round,
+      tasks: state.round.tasks.filter(t => t.id !== taskId),
+    },
+  };
 }
 
 export function addInboxTask(state, task) {
