@@ -554,8 +554,8 @@ export default function Dashboard({ round, perks, dailyPerk, categories, inboxTa
                 <path d="M5 4h14l1.5 10h-5l-1.2 2.5H9.7L8.5 14h-5L5 4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
                 <path d="M4 14v5h16v-5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
               </svg>
-              <span style={{ fontFamily: "'Space Mono'", fontSize: 11, color: inboxTasks.length ? '#3DDCFF' : '#4A4A5A' }}>
-                {inboxTasks.length}
+              <span style={{ fontFamily: "'Space Mono'", fontSize: 11, color: '#3DDCFF' }}>
+                {inboxTasks.length ? inboxTasks.length : 'No hay tareas en bandeja'}
               </span>
             </span>
             <span style={{
@@ -608,6 +608,16 @@ export default function Dashboard({ round, perks, dailyPerk, categories, inboxTa
                         <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: '#4A4A5A' }}>
                           {task.duration} min
                         </span>
+                        {task.carriedFromHourKey && (
+                          <span style={{ fontFamily: "'Space Grotesk'", fontSize: 8, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#FF3B3B', background: '#FF3B3B18', padding: '2px 5px', borderRadius: 2 }}>
+                            Vencida
+                          </span>
+                        )}
+                        {task.continuedPart && (
+                          <span style={{ fontFamily: "'Space Grotesk'", fontSize: 8, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#8F5CFF', background: '#8F5CFF18', border: '1px solid #8F5CFF45', padding: '2px 5px', borderRadius: 2 }}>
+                            Parte {task.continuedPart}
+                          </span>
+                        )}
                         <span style={{ fontFamily: "'Space Mono'", fontSize: 9, color: priorityStyle.color }}>
                           +{task.points}
                         </span>

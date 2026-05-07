@@ -101,7 +101,7 @@ export default function TaskCard({ task, categories, onComplete, onEdit, onDelet
     <div
       className={`arcadeEnter arcadePressable ${justCompleted ? 'taskClear' : ''}`}
       style={{
-        background: '#13131C',
+        background: showAsDone ? 'rgba(124, 255, 107, 0.07)' : '#13131C',
         border: '1px solid #2A2A35',
         borderRadius: 6,
         padding: '12px 14px',
@@ -184,6 +184,22 @@ export default function TaskCard({ task, categories, onComplete, onEdit, onDelet
           <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#4A4A5A' }}>
             {task.duration} min
           </span>
+          {task.continuedPart && (
+            <span style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: 9,
+              fontWeight: 800,
+              letterSpacing: '0.07em',
+              textTransform: 'uppercase',
+              padding: '2px 6px',
+              borderRadius: 2,
+              color: '#8F5CFF',
+              background: '#8F5CFF18',
+              border: '1px solid #8F5CFF45',
+            }}>
+              Parte {task.continuedPart}
+            </span>
+          )}
           {rolledDouble && (
             <span className="rollRewardTag" style={{
               fontFamily: "'Space Mono', monospace",

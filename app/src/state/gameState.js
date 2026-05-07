@@ -397,7 +397,10 @@ export function addInboxTask(state, task) {
 export function takeInboxTask(state, taskId) {
   const task = (state.taskInbox || []).find(t => t.id === taskId);
   if (!task) return state;
-  const taskWithPerks = applyCreationPerks(state, { ...task, done: false });
+  const shouldApplyCreationPerks = !task.carriedFromHourKey && !task.creationPerk && !task.originalPoints;
+  const taskWithPerks = shouldApplyCreationPerks
+    ? applyCreationPerks(state, { ...task, done: false })
+    : { ...task, done: false };
   return {
     ...state,
     taskInbox: (state.taskInbox || []).filter(t => t.id !== taskId),
@@ -595,15 +598,33 @@ export function buildSummary(state) {
     penalty: 0,
     rest,
     completed: completed.map(t => ({
+      id: t.id,
       title: t.title,
       pts: t.earned ?? t.points,
       cat: t.category,
+      category: t.category,
       priority: t.priority,
       duration: t.duration,
       urgent: t.urgent,
+      continuedFromTaskId: t.continuedFromTaskId,
+      continuedFromTitle: t.continuedFromTitle,
+      continuedPart: t.continuedPart,
+      continuedFromHourKey: t.continuedFromHourKey,
       breakdown: t.breakdown || null,
     })),
-    failed: failed.map(t => ({ title: t.title, cat: t.category, priority: t.priority, duration: t.duration, urgent: t.urgent })),
+    failed: failed.map(t => ({
+      id: t.id,
+      title: t.title,
+      cat: t.category,
+      category: t.category,
+      priority: t.priority,
+      duration: t.duration,
+      urgent: t.urgent,
+      continuedFromTaskId: t.continuedFromTaskId,
+      continuedFromTitle: t.continuedFromTitle,
+      continuedPart: t.continuedPart,
+      continuedFromHourKey: t.continuedFromHourKey,
+    })),
     peakMultiplier: round.peakMultiplier,
     status,
     perksUsed: [...perkNames],
@@ -657,6 +678,31 @@ function missedRound(hourStart, number) {
 
 const HOUR_MS = 60 * 60 * 1000;
 
+function normalizeCarriedTask(task, round) {
+  const activeTask = { ...task };
+  delete activeTask.completedAt;
+  delete activeTask.earned;
+  delete activeTask.breakdown;
+
+  return {
+    ...activeTask,
+    done: false,
+    carriedFromHourKey: round.hourKey,
+    carriedFromRoundNumber: round.number,
+  };
+}
+
+function carryExpiredTasksToInbox(taskInbox = [], round) {
+  if (round.rest) return taskInbox;
+
+  const existingIds = new Set(taskInbox.map(task => task.id));
+  const carried = round.tasks
+    .filter(task => !task.done && !existingIds.has(task.id))
+    .map(task => normalizeCarriedTask(task, round));
+
+  return carried.length ? [...taskInbox, ...carried] : taskInbox;
+}
+
 export function reconcileClock(state, now = Date.now()) {
   // Day not started yet: hold the clock — no rounds advance, no missed rounds.
   if (!state.day.startedAt) return state;
@@ -689,6 +735,7 @@ export function reconcileClock(state, now = Date.now()) {
   return {
     ...state,
     round: newRound,
+    taskInbox: carryExpiredTasksToInbox(state.taskInbox || [], state.round),
     day: {
       ...state.day,
       rounds: [...state.day.rounds, liveArchived, ...missed],

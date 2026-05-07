@@ -11,6 +11,7 @@ export default function TaskModal({
   mode = 'create',
   maxDurationMin = 60,
   categories,
+  continuableTasks = [],
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
@@ -31,6 +32,8 @@ export default function TaskModal({
   const [duration, setDuration] = useState(task?.duration || defaultDuration);
   const [urgent,   setUrgent]   = useState(task?.urgent ?? true);
   const [destination, setDestination] = useState('active');
+  const [entryMode, setEntryMode] = useState('new');
+  const [selectedContinueId, setSelectedContinueId] = useState('');
 
   const [manageOpen, setManageOpen] = useState(false);
   const [editingId,  setEditingId]  = useState(null);
@@ -65,10 +68,35 @@ export default function TaskModal({
 
   const selPriority = PRIORITIES.find(p => p.id === priority);
   const basePoints  = selPriority.pts + Math.floor(duration * 2.5);
+  const selectedContinueTask = continuableTasks.find(t => String(t.id) === selectedContinueId);
+
+  const selectEntryMode = (nextMode) => {
+    setEntryMode(nextMode);
+    if (nextMode === 'new') {
+      setSelectedContinueId('');
+    }
+  };
+
+  const handleContinueSelect = (id) => {
+    setSelectedContinueId(id);
+    const selected = continuableTasks.find(t => String(t.id) === id);
+    if (!selected) return;
+    setTitle(`${selected.baseTitle || selected.title} - Parte ${selected.nextPart}`);
+    setCat(selected.category || cats[0]?.id || 'dev');
+    setPriority(selected.priority || 'medium');
+  };
 
   const handleAdd = () => {
     if (!title.trim()) return;
-    const payload = { title: title.trim(), category: cat, priority, duration, points: basePoints, urgent, done: false };
+    const continuation = selectedContinueTask
+      ? {
+        continuedFromTaskId: selectedContinueTask.rootId || selectedContinueTask.id,
+        continuedFromTitle: selectedContinueTask.baseTitle || selectedContinueTask.title,
+        continuedPart: selectedContinueTask.nextPart,
+        continuedFromHourKey: selectedContinueTask.hourKey || null,
+      }
+      : {};
+    const payload = { title: title.trim(), category: cat, priority, duration, points: basePoints, urgent, done: false, ...continuation };
     if (editMode) {
       onSave && onSave(payload);
       onClose();
@@ -118,6 +146,82 @@ export default function TaskModal({
 
           {!editMode && (
             <>
+          <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
+            Tipo
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: entryMode === 'continue' ? 10 : 16 }}>
+            {[
+              { id: 'new', label: 'Nueva', hint: 'desde cero', color: '#FFD166' },
+              { id: 'continue', label: 'Continuar', hint: 'parte siguiente', color: '#8F5CFF' },
+            ].map(option => {
+              const active = entryMode === option.id;
+              const disabled = option.id === 'continue' && continuableTasks.length === 0;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  disabled={disabled}
+                  className={active && !disabled ? 'arcadePressable' : undefined}
+                  onClick={() => !disabled && selectEntryMode(option.id)}
+                  style={{
+                    padding: '10px 10px',
+                    borderRadius: 6,
+                    border: `1px solid ${active ? option.color + '80' : '#2A2A35'}`,
+                    background: active ? option.color + '18' : '#1C1C2A',
+                    color: disabled ? '#4A4A5A' : active ? option.color : '#8A8A9A',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    textAlign: 'left',
+                    boxShadow: active ? `0 0 12px ${option.color}25` : 'none',
+                    opacity: disabled ? 0.55 : 1,
+                  }}
+                >
+                  <span style={{ display: 'block', fontFamily: "'Bebas Neue'", fontSize: 18, letterSpacing: '0.08em', lineHeight: 1 }}>
+                    {option.label}
+                  </span>
+                  <span style={{ display: 'block', fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: active ? '#F0EDE8' : '#4A4A5A', marginTop: 3 }}>
+                    {disabled ? 'sin tareas' : option.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {entryMode === 'continue' && (
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
+                Tarea anterior
+              </label>
+              <select
+                value={selectedContinueId}
+                onChange={e => handleContinueSelect(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: '#1C1C2A',
+                  border: '1px solid #8F5CFF55',
+                  borderRadius: 6,
+                  padding: '11px 12px',
+                  fontFamily: "'Space Grotesk'",
+                  fontSize: 12,
+                  color: selectedContinueId ? '#F0EDE8' : '#8A8A9A',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <option value="">Elegir tarea para continuar...</option>
+                {continuableTasks.map(option => (
+                  <option key={option.id} value={option.id}>
+                    {option.title} | {option.sourceLabel} | {option.status} | Parte {option.nextPart}
+                  </option>
+                ))}
+              </select>
+              {selectedContinueTask && (
+                <div style={{ marginTop: 7, fontFamily: "'Space Grotesk'", fontSize: 10, color: '#8F5CFF', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Continua: {selectedContinueTask.baseTitle} | Parte {selectedContinueTask.nextPart}
+                </div>
+              )}
+            </div>
+          )}
+
           <label style={{ fontFamily: "'Space Grotesk'", fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4A4A5A', marginBottom: 6, display: 'block' }}>
             Destino
           </label>

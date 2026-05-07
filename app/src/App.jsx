@@ -288,6 +288,78 @@ function remainingMinFor(round) {
   return Math.max(1, Math.floor(ms / 60000));
 }
 
+function stripPartSuffix(title = '') {
+  return String(title).replace(/\s+-\s+Parte\s+\d+$/i, '').trim();
+}
+
+function rootContinuationId(task) {
+  return task?.continuedFromTaskId || task?.id;
+}
+
+function hourLabelFromKey(hourKey) {
+  const hour = String(hourKey || '').slice(-2);
+  return hour ? `${hour}:00` : 'Hoy';
+}
+
+function buildContinuableTasks(state) {
+  const byId = new Map();
+  const addCandidate = (task, source, sourceLabel, hourKey, status, index = 0) => {
+    if (!task?.title) return;
+    const id = task.id || `${hourKey || source}-${status}-${index}-${task.title}`;
+    if (byId.has(id)) return;
+    const category = task.category || task.cat || 'dev';
+    byId.set(id, {
+      id,
+      title: task.title,
+      baseTitle: stripPartSuffix(task.continuedFromTitle || task.title),
+      category,
+      priority: task.priority || 'medium',
+      duration: task.duration,
+      urgent: task.urgent,
+      source,
+      sourceLabel,
+      hourKey,
+      status,
+      rootId: rootContinuationId({ ...task, id }),
+      continuedPart: task.continuedPart,
+    });
+  };
+
+  (state.day?.rounds || []).forEach(round => {
+    const label = round.hourLabel || round.hour || hourLabelFromKey(round.hourKey);
+    (round.completed || []).forEach((task, index) => addCandidate(task, 'archived', label, round.hourKey, 'Hecha', index));
+    (round.failed || []).forEach((task, index) => addCandidate(task, 'archived', label, round.hourKey, 'Fallida', index));
+  });
+
+  (state.round?.tasks || []).forEach((task, index) => {
+    addCandidate(
+      task,
+      'current',
+      state.round?.hourKey ? hourLabelFromKey(state.round.hourKey) : 'Ahora',
+      state.round?.hourKey,
+      task.done ? 'Hecha' : 'Activa',
+      index
+    );
+  });
+
+  (state.taskInbox || []).forEach((task, index) => {
+    addCandidate(task, 'inbox', 'Bandeja', task.carriedFromHourKey, task.carriedFromHourKey ? 'Vencida' : 'Pendiente', index);
+  });
+
+  const allTasks = [
+    ...(state.day?.rounds || []).flatMap(round => [...(round.completed || []), ...(round.failed || [])]),
+    ...(state.round?.tasks || []),
+    ...(state.taskInbox || []),
+  ];
+
+  return [...byId.values()].map(candidate => {
+    const continuationCount = allTasks.filter(task => (
+      task?.continuedFromTaskId === candidate.rootId
+    )).length;
+    return { ...candidate, nextPart: continuationCount + 2 };
+  });
+}
+
 function getRoundPhase(round) {
   const remaining = Math.max(0, round.startedAt + round.durationMs - Date.now());
   const remainingRatio = round.durationMs > 0 ? remaining / round.durationMs : 0;
@@ -588,6 +660,7 @@ export default function App() {
 
   const dayPhase = !state.day.startedAt ? 'pending' : !state.day.endedAt ? 'active' : 'closed';
   const daySummary = useMemo(() => buildDaySummary(state), [state]);
+  const continuableTasks = useMemo(() => buildContinuableTasks(state), [state]);
 
   const categoryHandlers = {
     onAddCategory:    (cat)        => setState(prev => addCategoryAction(prev, cat)),
@@ -850,6 +923,7 @@ export default function App() {
           mode={editingTask ? 'edit' : 'create'}
           maxDurationMin={remainingMinFor(state.round)}
           categories={state.categories}
+          continuableTasks={continuableTasks}
           {...categoryHandlers}
         />
       )}
